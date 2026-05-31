@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <h2>⚙️ 帳號設置</h2>
+    <p>配置微信公眾號測試號或正式號信息</p>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-wechat"></i> 微信公眾號配置</div>
+            <div class="card-body">
+                <form method="post" action="/settings/account">
+                    <div class="mb-3">
+                        <label class="form-label">帳號名稱</label>
+                        <input type="text" name="name" class="form-control" value="{{ account.name if account else '默認帳號' }}">
+                        <div class="form-text">僅用於標識</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">AppID <span class="text-danger">*</span></label>
+                        <input type="text" name="appid" class="form-control" value="{{ account.appid if account else '' }}" required
+                               placeholder="wx1234567890abcdef">
+                        <div class="form-text">微信公眾平台 → 開發 → 基本配置 → AppID</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">AppSecret <span class="text-danger">*</span></label>
+                        <input type="password" name="appsecret" class="form-control" value="{{ account.appsecret if account else '' }}" required
+                               placeholder="請填寫 AppSecret">
+                        <div class="form-text">微信公眾平台 → 開發 → 基本配置 → AppSecret</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg"></i> 保存配置
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-info-circle"></i> 如何獲取</div>
+            <div class="card-body">
+                <ol class="text-secondary" style="font-size:13px; padding-left: 16px;">
+                    <li class="mb-2">打開 <a href="https://mp.weixin.qq.com/debug/cgi-bin/sandbox?t=sandbox/login"
+                           target="_blank" class="text-info">微信測試號頁面</a></li>
+                    <li class="mb-2">用手機微信掃碼登錄</li>
+                    <li class="mb-2">在測試號頁面找到 <strong>appID</strong> 和 <strong>appsecret</strong></li>
+                    <li class="mb-2">填寫到左側表單並保存</li>
+                    <li>在測試號頁面添加模板消息模板</li>
+                </ol>
+                <hr class="border-secondary">
+                <div class="alert alert-info mb-0" style="font-size:12px;">
+                    <i class="bi bi-lightbulb"></i> 測試號無需認證、無需服務器配置，即可完整使用模板消息推送 API。
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><i class="bi bi-database"></i> 數據庫</div>
+            <div class="card-body">
+                <div class="text-secondary" style="font-size:13px;">
+                    <p>數據存儲於本地 SQLite</p>
+                    <code class="code-block">data/wepush.db</code>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

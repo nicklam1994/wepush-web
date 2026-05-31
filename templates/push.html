@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <h2>🚀 手動推送</h2>
+    <p>一鍵發送模板消息</p>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-send"></i> 推送表單</div>
+            <div class="card-body">
+                {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+
+                {% if result %}
+                <div class="alert {% if result.status == 'success' %}alert-success{% elif result.status == 'partial' %}alert-warning{% else %}alert-danger{% endif %}">
+                    <strong>
+                        {% if result.status == 'success' %}✅ 全部推送成功！
+                        {% elif result.status == 'partial' %}⚠️ 部分推送成功
+                        {% else %}❌ 推送失敗
+                        {% endif %}
+                    </strong>
+                    <br>
+                    {{ result.success }}/{{ result.total }} 成功，{{ result.fail }} 失敗
+                </div>
+                {% endif %}
+
+                <form method="post" action="/push/send">
+                    <div class="mb-3">
+                        <label class="form-label">選擇模板 <span class="text-danger">*</span></label>
+                        <select name="template_id" id="push-template" class="form-select" required
+                                onchange="loadTemplateFields()">
+                            <option value="">— 請選擇 —</option>
+                            {% for t in templates %}
+                            <option value="{{ t.id }}">{{ t.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">接收人 <span class="text-danger">*</span></label>
+                        <div class="border rounded p-3" style="border-color:#30363d!important;max-height:150px;overflow-y:auto;">
+                            {% for r in recipients %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="recipient_ids" value="{{ r.id }}"
+                                       id="push-rec-{{ r.id }}" style="border-color:#30363d;">
+                                <label class="form-check-label" for="push-rec-{{ r.id }}" style="font-size:13px;">
+                                    {{ r.nickname or '未命名' }}
+                                    <code class="cron-badge" style="font-size:11px;">{{ r.openid[:25] }}...</code>
+                                </label>
+                            </div>
+                            {% endfor %}
+                            {% if not recipients %}
+                            <div class="text-secondary text-center py-2" style="font-size:13px;">
+                                還沒有接收人，先去 <a href="/recipients" class="text-info">添加接收人</a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">模板字段值</label>
+                        <div id="template-fields-container" class="text-secondary" style="font-size:13px;">
+                            請先選擇模板
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="var_values" id="hidden-var-values" value="{}">
+
+                    <button type="submit" class="btn btn-primary" onclick="submitPush(event)">
+                        <i class="bi bi-send"></i> 立即推送
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-info-circle"></i> 說明</div>
+            <div class="card-body" style="font-size:13px;">
+                <ul class="text-secondary" style="padding-left:16px;">
+                    <li class="mb-2">選擇模板後自動加載字段</li>
+                    <li class="mb-2">勾選要推送的接收人</li>
+                    <li>點擊「立即推送」發送</li>
+                </ul>
+                <hr class="border-secondary">
+                <p class="text-secondary mb-0">
+                    <i class="bi bi-lightbulb"></i>
+                    支持模板變量：<code>{{ '{{now}}' }}</code> <code>{{ '{{today}}' }}</code>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 模板字段定義緩存
+var templateFields = {};
+
+{% for t in templates %}
+templateFields[{{ t.id }}] = {{ t.data_fields|tojson }};
+{% endfor %}
+
+function loadTemplateFields() {
+    var sel = document.getElementById('push-template');
+    var tid = parseInt(sel.value);
+    var container = document.getElementById('template-fields-container');
+
+    if (!tid || !templateFields[tid]) {
+        container.innerHTML = '<span class="text-secondary">請先選擇模板</span>';
+        return;
+    }
+
+    var fields = templateFields[tid];
+    var html = '';
+    fields.forEach(function(f) {
+        var name = f.name || '';
+        var value = f.value || '';
+        html += '<div class="mb-2 row align-items-center">' +
+            '<div class="col-sm-3"><label class="form-label mb-0" style="font-family:monospace;">' + name + '</label></div>' +
+            '<div class="col-sm-9">' +
+            '<input type="text" class="form-control template-field" data-name="' + name + '" value="' + value + '" placeholder="輸入 ' + name + ' 的值">' +
+            '</div></div>';
+    });
+    container.innerHTML = html || '<span class="text-secondary">該模板無字段</span>';
+}
+
+// 初始加載
+document.addEventListener('DOMContentLoaded', function() {
+    var sel = document.getElementById('push-template');
+    if (sel.value) loadTemplateFields();
+});
+
+function submitPush(e) {
+    e.preventDefault();
+
+    // 構建變量映射
+    var values = {};
+    document.querySelectorAll('.template-field').forEach(function(input) {
+        values[input.getAttribute('data-name')] = input.value;
+    });
+
+    // 寫入 hidden
+    var hidden = document.getElementById('hidden-var-values');
+    hidden.value = JSON.stringify(values);
+
+    // 提交表單
+    e.target.closest('form').submit();
+}
+</script>
+{% endblock %}

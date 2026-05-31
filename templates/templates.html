@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2>📋 模板管理</h2>
+        <p>管理微信模板消息模板</p>
+    </div>
+    <a href="/templates/new" class="btn btn-primary"><i class="bi bi-plus"></i> 新建模板</a>
+</div>
+
+{% if templates %}
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>模板名稱</th>
+                    <th>微信模板ID</th>
+                    <th>字段數</th>
+                    <th>跳轉</th>
+                    <th>更新時間</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in templates %}
+                <tr>
+                    <td><strong>{{ t.name }}</strong></td>
+                    <td><code class="cron-badge">{{ t.template_id[:30] ~ '...' if t.template_id|length > 30 else t.template_id }}</code></td>
+                    <td>{{ t.data_fields|length if t.data_fields else 0 }}</td>
+                    <td>
+                        {% if t.url %}
+                        <span class="badge badge-success">鏈接</span>
+                        {% endif %}
+                        {% if t.ma_appid %}
+                        <span class="badge badge-secondary">小程序</span>
+                        {% endif %}
+                        {% if not t.url and not t.ma_appid %}
+                        <span class="text-secondary">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-secondary">{{ t.updated_at.strftime('%m-%d %H:%M') }}</td>
+                    <td>
+                        <a href="/templates/{{ t.id }}/edit" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form method="post" action="/templates/{{ t.id }}/delete" style="display:inline"
+                              onsubmit="return confirm('確定刪除模板「{{ t.name }}」？')">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body">
+        <div class="empty-state">
+            <i class="bi bi-file-text"></i>
+            <p>還沒有模板，創建一個吧</p>
+            <a href="/templates/new" class="btn btn-primary"><i class="bi bi-plus"></i> 新建模板</a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

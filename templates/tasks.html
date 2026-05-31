@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2>⏰ 定時任務</h2>
+        <p>配置 cron 定時推送任務</p>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#taskModal">
+        <i class="bi bi-plus"></i> 新建任務
+    </button>
+</div>
+
+{% if tasks %}
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>任務名稱</th>
+                    <th>模板</th>
+                    <th>Cron 表達式</th>
+                    <th>數據源</th>
+                    <th>接收人數</th>
+                    <th>狀態</th>
+                    <th>上次運行</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in tasks %}
+                <tr>
+                    <td><strong>{{ t.name }}</strong></td>
+                    <td>
+                        {% set tmpl = templates|selectattr('id', 'equalto', t.template_id)|first %}
+                        {{ tmpl.name if tmpl else '❌ 已刪除' }}
+                    </td>
+                    <td><code class="cron-badge">{{ t.cron_expr }}</code></td>
+                    <td>
+                        {% if t.data_source == 'weather' %}
+                        <span class="badge badge-secondary">🌤 天氣</span>
+                        {% elif t.data_source == 'map' %}
+                        <span class="badge badge-secondary">🗺 地圖</span>
+                        {% elif t.data_source == 'weather_map' %}
+                        <span class="badge badge-secondary">🌤🗺 天氣+地圖</span>
+                        {% else %}
+                        <span class="badge badge-secondary">📄 靜態</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ t.recipient_ids|length if t.recipient_ids else 0 }}</td>
+                    <td>
+                        {% if t.is_active %}
+                        <span class="badge badge-success">運行中</span>
+                        {% else %}
+                        <span class="badge badge-secondary">已暫停</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-secondary">{{ t.last_run.strftime('%m-%d %H:%M') if t.last_run else '—' }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
+                                data-bs-target="#taskModal"
+                                data-id="{{ t.id }}" data-name="{{ t.name }}"
+                                data-template-id="{{ t.template_id }}"
+                                data-recipient-ids="{{ t.recipient_ids|tojson }}"
+                                data-cron="{{ t.cron_expr }}"
+                                data-data-source="{{ t.data_source }}"
+                                data-data-config="{{ t.data_config|tojson }}"
+                                data-var-mapping="{{ t.var_mapping|tojson }}"
+                                data-is-active="{{ 'true' if t.is_active else 'false' }}">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <form method="post" action="/tasks/{{ t.id }}/toggle" style="display:inline">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi {{ 'bi-pause-fill' if t.is_active else 'bi-play-fill' }}"></i>
+                            </button>
+                        </form>
+                        <form method="post" action="/tasks/{{ t.id }}/delete" style="display:inline"
+                              onsubmit="return confirm('確定刪除任務「{{ t.name }}」？')">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body">
+        <div class="empty-state">
+            <i class="bi bi-clock"></i>
+            <p>還沒有定時任務，創建一個吧</p>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#taskModal">
+                <i class="bi bi-plus"></i> 新建任務
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Task Modal -->
+<div class="modal fade" id="taskModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="background:#161b22;border:1px solid #30363d;">
+            <div class="modal-header" style="border-bottom-color:#30363d;">
+                <h5 class="modal-title"><i class="bi bi-clock"></i> <span id="taskModalTitle">新建任務</span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="/tasks/save">
+                <div class="modal-body">
+                    <input type="hidden" name="task_id" id="task-id" value="">
+
+                    <div class="mb-3">
+                        <label class="form-label">任務名稱 <span class="text-danger">*</span></label>
+                        <input type="text" name="name" id="task-name" class="form-control" required
+                               placeholder="例如：每日天氣播報">
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">選擇模板 <span class="text-danger">*</span></label>
+                            <select name="template_id" id="task-template-id" class="form-select" required>
+                                <option value="">— 請選擇 —</option>
+                                {% for t in templates %}
+                                <option value="{{ t.id }}">{{ t.name }} ({{ t.template_id[:20] }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Cron 表達式 <span class="text-danger">*</span></label>
+                            <input type="text" name="cron_expr" id="task-cron" class="form-control" required
+                                   value="0 8 * * *" placeholder="分 時 日 月 週">
+                            <div class="form-text">
+                                <code>0 8 * * *</code> = 每天8:00 &nbsp;|&nbsp;
+                                <code>0 8,18 * * *</code> = 8:00和18:00 &nbsp;|&nbsp;
+                                <code>*/30 8-22 * * *</code> = 8-22點每30分鐘
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">接收人</label>
+                        <div class="border rounded p-3" style="border-color:#30363d!important;max-height:150px;overflow-y:auto;">
+                            {% for r in recipients %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="recipient_ids" value="{{ r.id }}"
+                                       id="rec-{{ r.id }}" style="border-color:#30363d;">
+                                <label class="form-check-label" for="rec-{{ r.id }}" style="font-size:13px;">
+                                    {{ r.nickname or '未命名' }}
+                                    <code class="cron-badge" style="font-size:11px;">{{ r.openid[:25] }}...</code>
+                                </label>
+                            </div>
+                            {% endfor %}
+                            {% if not recipients %}
+                            <div class="text-secondary text-center py-2" style="font-size:13px;">
+                                還沒有接收人，先去 <a href="/recipients" class="text-info">添加接收人</a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">數據源</label>
+                        <select name="data_source" id="task-data-source" class="form-select"
+                                onchange="toggleDataSourceConfig()">
+                            <option value="manual">📄 靜態數據（手動填寫變量值）</option>
+                            <option value="weather">🌤 天氣數據</option>
+                            <option value="map">🗺 地圖 POI 數據</option>
+                            <option value="weather_map">🌤🗺 天氣 + 地圖數據</option>
+                        </select>
+                    </div>
+
+                    <!-- 數據源高級配置 -->
+                    <div id="data-source-config" class="border rounded p-3 mb-3" style="border-color:#30363d!important;display:none;">
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label">高德 API Key</label>
+                                <input type="text" name="amap_key" id="config-amap-key" class="form-control"
+                                       placeholder="高德開放平台 Key">
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label">城市代碼</label>
+                                <input type="text" name="city_code" id="config-city-code" class="form-control"
+                                       value="440100" placeholder="440100=廣州">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label">POI 關鍵詞</label>
+                                <input type="text" name="poi_keywords" id="config-poi-keywords" class="form-control"
+                                       placeholder="例如：美食">
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label">POI 城市</label>
+                                <input type="text" name="poi_city" id="config-poi-city" class="form-control"
+                                       value="广州" placeholder="廣州">
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">OpenWeatherMap API Key（可選，覆蓋天氣數據）</label>
+                            <input type="text" name="openweathermap_key" id="config-owm-key" class="form-control"
+                                   placeholder="留空則使用香港天文台數據">
+                        </div>
+                    </div>
+
+                    <!-- 變量映射 -->
+                    <div class="mb-3">
+                        <label class="form-label">變量映射（模板字段 → 數據源字段）</label>
+                        <div id="var-mapping-container">
+                            <div class="input-group mb-2" style="gap: 8px;">
+                                <code class="cron-badge" style="padding:6px 10px;font-size:12px;">first</code>
+                                <span style="color:#8b949e;line-height:32px;">=</span>
+                                <input type="text" name="var_keys" class="form-control" style="width:auto;flex:1;"
+                                       placeholder="數據源變量名, 例如 now / today / temp / weather">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="this.parentElement.remove()">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
+                                onclick="addVarMapping()">
+                            <i class="bi bi-plus"></i> 添加映射
+                        </button>
+                        <div class="form-text">
+                            從數據源獲取的變量：<code>now</code> <code>today</code> <code>temp</code>
+                            <code>weather</code> <code>humidity</code> <code>poi_first</code>
+                            <code>poi_list</code>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="data_config" id="hidden-data-config" value="{}">
+                    <input type="hidden" name="var_mapping" id="hidden-var-mapping" value="{}">
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="is_active" id="task-is-active" value="true" checked
+                               style="border-color:#30363d;">
+                        <label class="form-check-label" for="task-is-active" style="font-size:13px;">啟用此任務</label>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top-color:#30363d;">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">保存任務</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 編輯模式：填充數據
+    var modal = document.getElementById('taskModal');
+    modal.addEventListener('show.bs.modal', function(event) {
+        var btn = event.relatedTarget;
+        var id = btn.getAttribute('data-id') || '';
+        document.getElementById('taskModalTitle').textContent = id ? '編輯任務' : '新建任務';
+        document.getElementById('task-id').value = id;
+        document.getElementById('task-name').value = btn.getAttribute('data-name') || '';
+        document.getElementById('task-template-id').value = btn.getAttribute('data-template-id') || '';
+        document.getElementById('task-cron').value = btn.getAttribute('data-cron') || '0 8 * * *';
+
+        // 接收人
+        var rids = [];
+        try { rids = JSON.parse(btn.getAttribute('data-recipient-ids') || '[]'); } catch(e) {}
+        document.querySelectorAll('input[name="recipient_ids"]').forEach(function(cb) {
+            cb.checked = rids.includes(parseInt(cb.value));
+        });
+
+        // 數據源
+        var ds = btn.getAttribute('data-data-source') || 'manual';
+        document.getElementById('task-data-source').value = ds;
+        toggleDataSourceConfig();
+
+        var dcfg = {};
+        try { dcfg = JSON.parse(btn.getAttribute('data-data-config') || '{}'); } catch(e) {}
+        document.getElementById('config-amap-key').value = dcfg.amap_key || '';
+        document.getElementById('config-city-code').value = dcfg.city_code || '440100';
+        document.getElementById('config-poi-keywords').value = dcfg.poi_keywords || '';
+        document.getElementById('config-poi-city').value = dcfg.poi_city || '广州';
+        document.getElementById('config-owm-key').value = dcfg.openweathermap_key || '';
+
+        // 變量映射
+        var vmap = {};
+        try { vmap = JSON.parse(btn.getAttribute('data-var-mapping') || '{}'); } catch(e) {}
+        var container = document.getElementById('var-mapping-container');
+        container.innerHTML = '';
+        var keys = Object.keys(vmap);
+        if (keys.length === 0) {
+            addVarMapping();
+        } else {
+            keys.forEach(function(k) {
+                addVarMapping(k, vmap[k]);
+            });
+        }
+    });
+
+    // 表單提交前構建 JSON
+    var form = modal.querySelector('form');
+    form.addEventListener('submit', function() {
+        // 接收人
+        var rids = [];
+        document.querySelectorAll('input[name="recipient_ids"]:checked').forEach(function(cb) {
+            rids.push(parseInt(cb.value));
+        });
+
+        // 數據源配置
+        var dcfg = {};
+        dcfg.amap_key = document.getElementById('config-amap-key').value;
+        dcfg.city_code = document.getElementById('config-city-code').value;
+        dcfg.poi_keywords = document.getElementById('config-poi-keywords').value;
+        dcfg.poi_city = document.getElementById('config-poi-city').value;
+        dcfg.openweathermap_key = document.getElementById('config-owm-key').value;
+
+        // 變量映射
+        var vmap = {};
+        var rows = document.querySelectorAll('#var-mapping-container > div');
+        rows.forEach(function(row) {
+            var keyInput = row.querySelector('input[name="var_keys"]');
+            var label = row.querySelector('code');
+            if (keyInput && label && keyInput.value.trim()) {
+                vmap[label.textContent.trim()] = keyInput.value.trim();
+            }
+        });
+
+        // 寫入 hidden 字段
+        var hiddenDcfg = document.createElement('input');
+        hiddenDcfg.type = 'hidden';
+        hiddenDcfg.name = 'data_config';
+        hiddenDcfg.value = JSON.stringify(dcfg);
+        form.appendChild(hiddenDcfg);
+
+        var hiddenVmap = document.createElement('input');
+        hiddenVmap.type = 'hidden';
+        hiddenVmap.name = 'var_mapping';
+        hiddenVmap.value = JSON.stringify(vmap);
+        form.appendChild(hiddenVmap);
+    });
+});
+
+function toggleDataSourceConfig() {
+    var val = document.getElementById('task-data-source').value;
+    var config = document.getElementById('data-source-config');
+    config.style.display = (val === 'manual') ? 'none' : 'block';
+}
+
+function addVarMapping(templateField, sourceField) {
+    var container = document.getElementById('var-mapping-container');
+    var div = document.createElement('div');
+    div.className = 'input-group mb-2';
+    div.style.cssText = 'gap: 8px;';
+
+    var fields = [];
+    document.querySelectorAll('input[name="recipient_ids"]:checked').forEach(function(cb) {
+        // 這裡我們用默認的 first, keyword1, keyword2, remark
+    });
+
+    // 從服務器獲取模板字段（簡化版）
+    var fieldName = templateField || 'keyword' + (container.children.length + 1);
+
+    div.innerHTML = '<code class="cron-badge" style="padding:6px 10px;font-size:12px;">' + fieldName + '</code>' +
+        '<span style="color:#8b949e;line-height:32px;">=</span>' +
+        '<input type="text" name="var_keys" class="form-control" style="width:auto;flex:1;" value="' + (sourceField || '') + '" placeholder="變量名">' +
+        '<button type="button" class="btn btn-sm btn-outline-secondary" onclick="this.parentElement.remove()">✕</button>';
+    container.appendChild(div);
+}
+</script>
+{% endblock %}

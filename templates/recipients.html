@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2>👥 接收人管理</h2>
+        <p>管理關注者的 OpenID</p>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#recipientModal">
+        <i class="bi bi-plus"></i> 添加接收人
+    </button>
+</div>
+
+{% if recipients %}
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>備註名</th>
+                    <th>OpenID</th>
+                    <th>備註</th>
+                    <th>添加時間</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in recipients %}
+                <tr>
+                    <td><strong>{{ r.nickname or '未命名' }}</strong></td>
+                    <td><code class="cron-badge" style="font-size:11px;">{{ r.openid[:40] ~ '...' if r.openid|length > 40 else r.openid }}</code></td>
+                    <td class="text-secondary">{{ r.note or '—' }}</td>
+                    <td class="text-secondary">{{ r.created_at.strftime('%m-%d %H:%M') }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-secondary"
+                                data-bs-toggle="modal" data-bs-target="#recipientModal"
+                                data-id="{{ r.id }}" data-nickname="{{ r.nickname }}"
+                                data-openid="{{ r.openid }}" data-note="{{ r.note }}">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <form method="post" action="/recipients/{{ r.id }}/delete" style="display:inline"
+                              onsubmit="return confirm('確定刪除嗎？')">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body">
+        <div class="empty-state">
+            <i class="bi bi-people"></i>
+            <p>還沒有接收人</p>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#recipientModal">
+                <i class="bi bi-plus"></i> 添加接收人
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal -->
+<div class="modal fade" id="recipientModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background:#161b22;border:1px solid #30363d;">
+            <div class="modal-header" style="border-bottom-color:#30363d;">
+                <h5 class="modal-title"><i class="bi bi-person-plus"></i> 接收人</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="/recipients/save">
+                <div class="modal-body">
+                    <input type="hidden" name="rid" id="recipient-id" value="">
+                    <div class="mb-3">
+                        <label class="form-label">備註名</label>
+                        <input type="text" name="nickname" id="recipient-nickname" class="form-control"
+                               placeholder="例如：小明">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">OpenID <span class="text-danger">*</span></label>
+                        <input type="text" name="openid" id="recipient-openid" class="form-control" required
+                               placeholder="oX1RZ5v...">
+                        <div class="form-text">關注者在當前公眾號下的唯一標識</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">備註</label>
+                        <input type="text" name="note" id="recipient-note" class="form-control"
+                               placeholder="可選備註">
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top-color:#30363d;">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var modal = document.getElementById('recipientModal');
+    modal.addEventListener('show.bs.modal', function(event) {
+        var btn = event.relatedTarget;
+        var id = btn.getAttribute('data-id') || '';
+        var nickname = btn.getAttribute('data-nickname') || '';
+        var openid = btn.getAttribute('data-openid') || '';
+        var note = btn.getAttribute('data-note') || '';
+
+        document.getElementById('recipient-id').value = id;
+        document.getElementById('recipient-nickname').value = nickname;
+        document.getElementById('recipient-openid').value = openid;
+        document.getElementById('recipient-note').value = note;
+    });
+});
+</script>
+{% endblock %}

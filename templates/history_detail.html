@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <h2>📖 推送詳情</h2>
+    <p>#{{ h.id }} - {{ h.task_name }} - {{ h.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">基本信息</div>
+            <div class="card-body">
+                <table class="table" style="font-size:13px;">
+                    <tr><td class="text-secondary" style="width:100px;">任務</td><td>{{ h.task_name }}</td></tr>
+                    <tr><td class="text-secondary">模板</td><td>{{ h.template_name }}</td></tr>
+                    <tr><td class="text-secondary">觸發</td><td>{{ '定時任務' if h.trigger_type == 'cron' else '手動推送' }}</td></tr>
+                    <tr><td class="text-secondary">時間</td><td>{{ h.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">推送結果</div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="number" style="font-size:28px;font-weight:700;color:#8b949e;">{{ h.total_count }}</div>
+                        <div class="text-secondary" style="font-size:12px;">目標</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="number" style="font-size:28px;font-weight:700;color:#3fb950;">{{ h.success_count }}</div>
+                        <div class="text-secondary" style="font-size:12px;">成功</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="number" style="font-size:28px;font-weight:700;color:#f85149;">{{ h.fail_count }}</div>
+                        <div class="text-secondary" style="font-size:12px;">失敗</div>
+                    </div>
+                </div>
+                <div class="mt-3 text-center">
+                    {% if h.status == 'success' %}
+                    <span class="badge badge-success" style="font-size:14px;padding:6px 16px;">✅ 全部成功</span>
+                    {% elif h.status == 'partial' %}
+                    <span class="badge badge-warning" style="font-size:14px;padding:6px 16px;">⚠️ 部分成功</span>
+                    {% elif h.status == 'fail' %}
+                    <span class="badge badge-danger" style="font-size:14px;padding:6px 16px;">❌ 全部失敗</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 推送詳情 -->
+<div class="card mt-3">
+    <div class="card-header">發送詳情</div>
+    <div class="card-body p-0">
+        {% if h.details %}
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>OpenID</th>
+                    <th>狀態</th>
+                    <th>錯誤信息</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in h.details %}
+                <tr>
+                    <td><code class="cron-badge" style="font-size:11px;">{{ d.openid[:30] }}...</code></td>
+                    <td>
+                        {% if d.status == 'success' %}
+                        <span class="badge badge-success">成功</span>
+                        {% else %}
+                        <span class="badge badge-danger">失敗</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-secondary">{{ d.get('error', '—') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-list"></i>
+            <p>無詳細記錄</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="/history" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> 返回歷史</a>
+</div>
+{% endblock %}

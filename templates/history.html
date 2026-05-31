@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <h2>📖 推送歷史</h2>
+    <p>所有推送記錄</p>
+</div>
+
+{% if history %}
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>時間</th>
+                    <th>任務</th>
+                    <th>模板</th>
+                    <th>觸發方式</th>
+                    <th>結果</th>
+                    <th>成功/總數</th>
+                    <th>詳情</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in history %}
+                <tr>
+                    <td class="text-secondary" style="white-space:nowrap;">{{ h.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>{{ h.task_name }}</td>
+                    <td>{{ h.template_name }}</td>
+                    <td>
+                        {% if h.trigger_type == 'cron' %}
+                        <span class="badge badge-secondary">⏰ 定時</span>
+                        {% else %}
+                        <span class="badge badge-warning">🚀 手動</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if h.status == 'success' %}
+                        <span class="badge badge-success">全部成功</span>
+                        {% elif h.status == 'partial' %}
+                        <span class="badge badge-warning">部分成功</span>
+                        {% elif h.status == 'fail' %}
+                        <span class="badge badge-danger">失敗</span>
+                        {% else %}
+                        <span class="badge badge-secondary">待發送</span>
+                        {% endif %}
+                    </td>
+                    <td><strong>{{ h.success_count }}</strong>/{{ h.total_count }}</td>
+                    <td><a href="/history/{{ h.id }}" class="btn btn-sm btn-outline-secondary">查看</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 分頁 -->
+<nav class="mt-3">
+    <ul class="pagination pagination-sm justify-content-center">
+        <li class="page-item {{ 'disabled' if page_num <= 1 }}">
+            <a class="page-link" href="/history?page={{ page_num - 1 }}" style="background:#161b22;border-color:#30363d;color:#8b949e;">上一頁</a>
+        </li>
+        {% for p in range(1, total_pages + 1) %}
+        <li class="page-item {{ 'active' if p == page_num }}">
+            <a class="page-link" href="/history?page={{ p }}" style="background:#161b22;border-color:#30363d;color:#8b949e;{{ 'background:#1f6feb!important;color:#fff!important;' if p == page_num }}">{{ p }}</a>
+        </li>
+        {% endfor %}
+        <li class="page-item {{ 'disabled' if page_num >= total_pages }}">
+            <a class="page-link" href="/history?page={{ page_num + 1 }}" style="background:#161b22;border-color:#30363d;color:#8b949e;">下一頁</a>
+        </li>
+    </ul>
+</nav>
+
+{% else %}
+<div class="card">
+    <div class="card-body">
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>暫無推送記錄</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

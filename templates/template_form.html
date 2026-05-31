@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <h2>{{ '編輯模板' if template else '新建模板' }}</h2>
+    <p>{{ template.template_id if template else '創建一個新的模板消息模板' }}</p>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-file-text"></i> 模板信息</div>
+            <div class="card-body">
+                <form method="post" action="/templates/save">
+                    {% if template %}
+                    <input type="hidden" name="tid" value="{{ template.id }}">
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="form-label">模板名稱 <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" required
+                               value="{{ template.name if template else '' }}"
+                               placeholder="例如：訂單通知">
+                        <div class="form-text">用於標識，方便自己識別</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">微信模板ID <span class="text-danger">*</span></label>
+                        <input type="text" name="template_id" class="form-control" required
+                               value="{{ template.template_id if template else '' }}"
+                               placeholder="-l2K1t_jK8XwX0jGXLy6ZB_dW3U5...">
+                        <div class="form-text">在微信公眾平台模板消息中申請獲取</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">點擊跳轉 URL</label>
+                        <input type="text" name="url" class="form-control"
+                               value="{{ template.url if template else '' }}"
+                               placeholder="https://example.com">
+                        <div class="form-text">可選，用戶點擊模板消息後的跳轉鏈接</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">跳轉小程序 AppID</label>
+                            <input type="text" name="ma_appid" class="form-control"
+                                   value="{{ template.ma_appid if template else '' }}"
+                                   placeholder="wx...">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">小程序頁面路徑</label>
+                            <input type="text" name="ma_page_path" class="form-control"
+                                   value="{{ template.ma_page_path if template else '' }}"
+                                   placeholder="pages/index/index">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">模板字段定義 (JSON) <span class="text-danger">*</span></label>
+                        <textarea name="data_fields" class="form-control" rows="10"
+                                  placeholder='[{"name":"first","value":"您好","color":"#000000"}]'>{{ example }}</textarea>
+                        <div class="form-text">
+                            JSON 數組，每個字段包含 name（字段名）、value（默認值）、color（顏色）。
+                            <br>模板消息的 {{ first.DATA }}、{{ keyword1.DATA }} 等對應 name 值。
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">備註</label>
+                        <textarea name="remark" class="form-control" rows="2"
+                                  placeholder="可選備註">{{ template.remark if template else '' }}</textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg"></i> 保存模板
+                    </button>
+                    <a href="/templates" class="btn btn-outline-secondary">取消</a>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-info-circle"></i> 字段格式說明</div>
+            <div class="card-body" style="font-size:13px;">
+                <p class="text-secondary">模板字段定義格式：</p>
+                <div class="code-block">[
+  {
+    "name": "first",
+    "value": "您好，有新消息",
+    "color": "#000000"
+  },
+  {
+    "name": "keyword1",
+    "value": "訂單內容",
+    "color": "#173177"
+  },
+  {
+    "name": "keyword2",
+    "value": "2024-01-01",
+    "color": "#173177"
+  },
+  {
+    "name": "remark",
+    "value": "感謝支持",
+    "color": "#000000"
+  }
+]</div>
+                <hr class="border-secondary">
+                <p class="text-secondary mb-2"><strong>可用的系統變量：</strong></p>
+                <ul class="text-secondary" style="font-size:12px; padding-left:16px;">
+                    <li><code>{{ '{{now}}' }}</code> — 當前時間</li>
+                    <li><code>{{ '{{today}}' }}</code> — 當前日期</li>
+                    <li><code>{{ '{{time}}' }}</code> — 當前時分</li>
+                    <li><code>{{ '{{weekday}}' }}</code> — 星期幾</li>
+                    <li><code>{{ '{{temp}}' }}</code> — 當前溫度</li>
+                    <li><code>{{ '{{weather}}' }}</code> — 天氣狀況</li>
+                    <li><code>{{ '{{humidity}}' }}</code> — 濕度</li>
+                    <li><code>{{ '{{poi_first}}' }}</code> — 第一個POI</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

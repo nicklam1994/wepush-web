@@ -27,6 +27,7 @@ class Template(Base):
     url = Column(String(500), default="", comment="点击跳转链接")
     ma_appid = Column(String(200), default="", comment="跳转小程序appid")
     ma_page_path = Column(String(500), default="", comment="跳转小程序页面路径")
+    # JSON array of {name, value, color}
     data_fields = Column(JSON, default=list, comment="模板数据字段定义")
     remark = Column(Text, default="", comment="备注说明")
     created_at = Column(DateTime, default=datetime.now)
@@ -51,10 +52,14 @@ class Task(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False, comment="任务名称")
     template_id = Column(Integer, nullable=False, comment="关联模板ID")
+    # JSON array of recipient IDs or "all"
     recipient_ids = Column(JSON, default=list, comment="接收人ID列表")
     cron_expr = Column(String(100), nullable=False, comment="cron 表达式")
+    # data_source: "manual" | "weather" | "map" | "weather_map"
     data_source = Column(String(50), default="manual", comment="数据源类型")
+    # JSON config for data sources
     data_config = Column(JSON, default=dict, comment="数据源配置")
+    # Variable mapping: {"weather_temp":"{{temp}}", ...}
     var_mapping = Column(JSON, default=dict, comment="变量映射")
     is_active = Column(Boolean, default=True, comment="是否启用")
     last_run = Column(DateTime, nullable=True)
@@ -74,6 +79,7 @@ class PushHistory(Base):
     total_count = Column(Integer, default=0, comment="目标人数")
     success_count = Column(Integer, default=0, comment="成功数")
     fail_count = Column(Integer, default=0, comment="失败数")
+    # JSON array of {openid, status, error}
     details = Column(JSON, default=list, comment="推送详情")
     status = Column(String(20), default="pending", comment="pending/success/partial/fail")
     created_at = Column(DateTime, default=datetime.now)

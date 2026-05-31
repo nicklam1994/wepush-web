@@ -30,7 +30,7 @@ cd wepush-web
 
 # 2. 虛擬環境
 python3 -m venv venv
-source venv/bin/activate
+source venv/bin/activate   # Windows: venv\\Scripts\\activate
 
 # 3. 依賴
 pip install -r requirements.txt
