@@ -161,6 +161,9 @@ async def _manual_push_async(
     if not account:
         return {"error": "沒有配置有效的微信賬號"}
 
+    # Normalize to list
+    if not isinstance(recipient_ids, list):
+        recipient_ids = [recipient_ids]
     recipients = db_session.query(Recipient).filter(
         Recipient.id.in_(recipient_ids)
     ).all() if recipient_ids else []
