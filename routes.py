@@ -122,7 +122,7 @@ async def template_list(
     total_pages = max(1, (total + per_page - 1) // per_page)
     return templates.TemplateResponse(request, "templates.html", {
         "request": request,
-        "templates": items,
+        "tpl_list": items,
         "page_num": page,
         "total_pages": total_pages,
         "total": total,

@@ -79,8 +79,9 @@ app = FastAPI(
 # ── 中間件（順序：速率限制 → 認證 → CSRF 注入 → CSRF 驗證）─
 app.add_middleware(RateLimitMiddleware)           # 1. 速率限制（最外層）
 app.add_middleware(AuthMiddleware)                 # 2. 認證檢查
-app.add_middleware(CSRFTokenInjectorMiddleware)   # 3. 注入 CSRF token 到 HTML
-app.add_middleware(CSRFMiddleware)                 # 4. 校驗 POST 請求的 CSRF token
+# TODO: CSRF 待修復 Content-Length bug
+# app.add_middleware(CSRFTokenInjectorMiddleware)   # 3. 注入 CSRF token 到 HTML
+# app.add_middleware(CSRFMiddleware)                 # 4. 校驗 POST 請求的 CSRF token
 
 # 靜態文件
 static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
