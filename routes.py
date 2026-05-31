@@ -17,7 +17,7 @@ from models import WechatAccount, Template, Recipient, Task, PushHistory
 from schemas import AccountForm, TemplateForm, RecipientForm, TaskForm, PushForm
 from wechat import build_template_data, get_wechat_template_example
 from apis import fetch_weather_hko
-from scheduler import sync_push_manual, refresh_task, remove_task_job
+from scheduler import sync_push_manual, refresh_task, remove_task_job, _manual_push_async
 
 logger = logging.getLogger(__name__)
 
@@ -469,7 +469,7 @@ async def push_send(
         logger.warning(f"Invalid JSON in push form: {e}")
         return RedirectResponse(url="/push", status_code=303)
 
-    result = sync_push_manual(
+    result = await _manual_push_async(
         template_id=template_id,
         recipient_ids=rids,
         variables=values,
