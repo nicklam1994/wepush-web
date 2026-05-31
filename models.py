@@ -1,7 +1,61 @@
 """SQLAlchemy models for WePush Web."""
+import os
+import base64
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, JSON, Float
+from cryptography.fernet import Fernet
 from database import Base
+
+# ---------------------------------------------------------------------------
+# Encryption helpers for appsecret
+# ---------------------------------------------------------------------------
+_ENCRYPTION_KEY_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "data", ".encryption_key"
+)
+
+
+def _get_fernet() -> Fernet:
+    """Return a Fernet instance, creating the key file if it does not exist."""
+    os.makedirs(os.path.dirname(_ENCRYPTION_KEY_PATH), exist_ok=True)
+
+    if os.path.exists(_ENCRYPTION_KEY_PATH):
+        with open(_ENCRYPTION_KEY_PATH, "rb") as f:
+            key = f.read()
+    else:
+        key = Fernet.generate_key()
+        with open(_ENCRYPTION_KEY_PATH, "wb") as f:
+            f.write(key)
+
+    return Fernet(key)
+
+
+def encrypt_secret(text: str) -> str:
+    """Encrypt a plain-text secret.  Returns a base64-encoded token string."""
+    if not text:
+        return text
+    f = _get_fernet()
+    return f.encrypt(text.encode("utf-8")).decode("utf-8")
+
+
+def decrypt_secret(token: str) -> str:
+    """Decrypt a previously-encrypted secret.
+
+    Falls back to returning the input as plain text when decryption fails,
+    so existing (unencrypted) data continues to work.
+    """
+    if not token:
+        return token
+    try:
+        f = _get_fernet()
+        return f.decrypt(token.encode("utf-8")).decode("utf-8")
+    except Exception:
+        # Backward compatibility: stored value may be unencrypted
+        return token
+
+
+# ---------------------------------------------------------------------------
+# Models
+# ---------------------------------------------------------------------------
 
 
 class WechatAccount(Base):
@@ -11,10 +65,20 @@ class WechatAccount(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False, default="默认账号")
     appid = Column(String(200), nullable=False)
-    appsecret = Column(String(200), nullable=False)
+    appsecret = Column(String(500), nullable=False)  # stored encrypted
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    @property
+    def appsecret_plain(self) -> str:
+        """Returns the decrypted appsecret."""
+        return decrypt_secret(self.appsecret)
+
+    @appsecret_plain.setter
+    def appsecret_plain(self, value: str) -> None:
+        """Stores the encrypted appsecret in the column."""
+        self.appsecret = encrypt_secret(value)
 
 
 class Template(Base):
@@ -30,6 +94,7 @@ class Template(Base):
     # JSON array of {name, value, color}
     data_fields = Column(JSON, default=list, comment="模板数据字段定义")
     remark = Column(Text, default="", comment="备注说明")
+    is_deleted = Column(Boolean, default=False, comment="软删除标记")
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 

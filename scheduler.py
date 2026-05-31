@@ -1,4 +1,5 @@
 """APScheduler-based scheduled task system."""
+import asyncio
 import json
 import logging
 from datetime import datetime
@@ -7,6 +8,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 from database import SessionLocal
 from models import Task, PushHistory, Template, Recipient, WechatAccount
+from models import decrypt_secret
 from wechat import send_template_message, build_template_data
 from apis import resolve_data_source
 
@@ -75,11 +77,13 @@ async def execute_push_task(task_id: int):
         fail_count = 0
         details = []
 
+        appsecret = decrypt_secret(account.appsecret)
+
         for r in recipients:
             try:
                 result = await send_template_message(
                     appid=account.appid,
-                    appsecret=account.appsecret,
+                    appsecret=appsecret,
                     openid=r.openid,
                     template_id=template.template_id,
                     data=data,
@@ -137,18 +141,9 @@ def sync_push_manual(
     Synchronous wrapper for manual push (called from web route).
     Used for one-off manual pushes.
     """
-    import asyncio
-
-    # 在新的事件循環中執行
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    try:
-        result = loop.run_until_complete(
-            _manual_push_async(template_id, recipient_ids, variables, db_session)
-        )
-        return result
-    finally:
-        loop.close()
+    return asyncio.run(
+        _manual_push_async(template_id, recipient_ids, variables, db_session)
+    )
 
 
 async def _manual_push_async(
@@ -182,11 +177,13 @@ async def _manual_push_async(
     fail_count = 0
     details = []
 
+    appsecret = decrypt_secret(account.appsecret)
+
     for r in recipients:
         try:
             result = await send_template_message(
                 appid=account.appid,
-                appsecret=account.appsecret,
+                appsecret=appsecret,
                 openid=r.openid,
                 template_id=template.template_id,
                 data=data,

@@ -60,7 +60,7 @@
                                   placeholder='[{"name":"first","value":"您好","color":"#000000"}]'>{{ example }}</textarea>
                         <div class="form-text">
                             JSON 數組，每個字段包含 name（字段名）、value（默認值）、color（顏色）。
-                            <br>模板消息的 {{ first.DATA }}、{{ keyword1.DATA }} 等對應 name 值。
+                            <br>模板消息的 {{ '{{ first.DATA }}' }}、{{ '{{ keyword1.DATA }}' }} 等對應 name 值。
                         </div>
                     </div>
 

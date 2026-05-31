@@ -4,127 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WePush Web - 微信推送管理</title>
-    <link href="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.bootcdn.net/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <style>
-        body { background: #0f1117; color: #e1e4e8; font-size: 14px; }
-        .sidebar {
-            position: fixed; top: 0; left: 0; bottom: 0; width: 220px;
-            background: #161b22; border-right: 1px solid #30363d;
-            padding: 0; z-index: 100; overflow-y: auto;
-        }
-        .sidebar-brand {
-            padding: 18px 20px; font-size: 16px; font-weight: 600;
-            border-bottom: 1px solid #30363d; background: #1c2333;
-        }
-        .sidebar-brand i { color: #58a6ff; margin-right: 8px; }
-        .sidebar .nav-link {
-            color: #8b949e; padding: 10px 20px; border-radius: 0;
-            border-left: 3px solid transparent; margin: 2px 0;
-        }
-        .sidebar .nav-link:hover {
-            color: #e1e4e8; background: #1c2128;
-        }
-        .sidebar .nav-link.active {
-            color: #58a6ff; border-left-color: #58a6ff;
-            background: #1c2333; font-weight: 500;
-        }
-        .sidebar .nav-link i { width: 20px; margin-right: 8px; text-align: center; }
-        .main-content { margin-left: 220px; padding: 24px; min-height: 100vh; }
-        .page-header { margin-bottom: 24px; }
-        .page-header h2 { font-size: 22px; font-weight: 600; margin: 0; }
-        .page-header p { color: #8b949e; margin: 4px 0 0 0; font-size: 13px; }
-
-        .card {
-            background: #161b22; border: 1px solid #30363d;
-            border-radius: 8px; margin-bottom: 16px;
-        }
-        .card-header {
-            background: #1c2333; border-bottom: 1px solid #30363d;
-            padding: 12px 16px; font-weight: 500; font-size: 14px;
-        }
-        .card-body { padding: 16px; }
-
-        .stat-card {
-            background: #161b22; border: 1px solid #30363d;
-            border-radius: 8px; padding: 20px; text-align: center;
-            transition: border-color 0.2s;
-        }
-        .stat-card:hover { border-color: #58a6ff; }
-        .stat-card .number { font-size: 28px; font-weight: 700; color: #58a6ff; }
-        .stat-card .label { font-size: 12px; color: #8b949e; margin-top: 4px; }
-        .stat-card .icon { font-size: 24px; margin-bottom: 8px; }
-
-        .table {
-            color: #e1e4e8; font-size: 13px; margin: 0;
-        }
-        .table th {
-            border-color: #30363d; color: #8b949e; font-weight: 500;
-            padding: 8px 12px; font-size: 12px; text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .table td {
-            border-color: #21262d; padding: 10px 12px; vertical-align: middle;
-        }
-        .table-hover tbody tr:hover { background: #1c2128; }
-
-        .form-control, .form-select {
-            background: #0d1117; border-color: #30363d; color: #e1e4e8;
-            font-size: 13px;
-        }
-        .form-control:focus, .form-select:focus {
-            background: #0d1117; border-color: #58a6ff; color: #e1e4e8;
-            box-shadow: 0 0 0 2px rgba(88,166,255,0.15);
-        }
-        .form-label { font-size: 13px; margin-bottom: 4px; color: #8b949e; }
-        .form-text { font-size: 11px; color: #6e7681; }
-        textarea.form-control { font-family: 'SF Mono', 'Consolas', monospace; font-size: 12px; }
-
-        .btn { font-size: 13px; padding: 6px 14px; border-radius: 6px; }
-        .btn-primary { background: #238636; border-color: #238636; }
-        .btn-primary:hover { background: #2ea043; border-color: #2ea043; }
-        .btn-outline-secondary {
-            border-color: #30363d; color: #8b949e;
-        }
-        .btn-outline-secondary:hover {
-            background: #1c2128; border-color: #58a6ff; color: #58a6ff;
-        }
-        .btn-danger { background: #da3633; border-color: #da3633; }
-        .btn-sm { padding: 4px 10px; font-size: 12px; }
-
-        .badge { font-size: 11px; padding: 3px 8px; border-radius: 12px; font-weight: 500; }
-        .badge-success { background: #238636; }
-        .badge-warning { background: #d29922; }
-        .badge-danger { background: #da3633; }
-        .badge-secondary { background: #30363d; }
-
-        .alert { border-radius: 8px; font-size: 13px; }
-        .alert-info { background: #0c2d48; border-color: #1f6feb; color: #58a6ff; }
-        .alert-success { background: #0f3d20; border-color: #238636; color: #3fb950; }
-        .alert-danger { background: #3d1313; border-color: #da3633; color: #f85149; }
-
-        .code-block {
-            background: #0d1117; border: 1px solid #30363d;
-            border-radius: 6px; padding: 12px; font-family: 'SF Mono', monospace;
-            font-size: 12px; white-space: pre-wrap; overflow-x: auto;
-        }
-
-        .empty-state { text-align: center; padding: 40px 20px; color: #6e7681; }
-        .empty-state i { font-size: 48px; margin-bottom: 12px; }
-        .cron-badge {
-            font-family: 'SF Mono', monospace; background: #1c2333;
-            border: 1px solid #30363d; padding: 2px 8px; border-radius: 4px;
-            font-size: 12px;
-        }
-
-        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-
-        @media (max-width: 768px) {
-            .sidebar { width: 60px; }
-            .sidebar .nav-link span, .sidebar-brand span { display: none; }
-            .main-content { margin-left: 60px; }
-        }
-    </style>
+    <link href="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+          crossorigin="anonymous">
+    <link href="https://cdn.bootcdn.net/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"
+          rel="stylesheet"
+          integrity="sha384-YVPW9X370xBU5teHKK6R8VJ+xAB4JQczEJ2B6GQYhUC0k4nqF0FQjBNiYqR4h5p"
+          crossorigin="anonymous">
+    <link href="/static/style.css" rel="stylesheet">
 </head>
 <body>
 
@@ -163,7 +51,9 @@
     {% block content %}{% endblock %}
 </div>
 
-<script src="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
 <script>
 // Auto-dismiss alerts after 5 seconds
 document.addEventListener('DOMContentLoaded', function() {

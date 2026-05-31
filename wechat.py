@@ -1,10 +1,12 @@
 """WeChat API integration - token management & template message sending."""
 import time
+import threading
 import json
 import httpx
 from typing import Optional
 
-# In-memory token cache
+# Thread-safe token cache
+_token_lock = threading.Lock()
 _token_cache: dict = {
     "access_token": None,
     "expires_at": 0,
@@ -12,10 +14,12 @@ _token_cache: dict = {
 
 
 async def get_access_token(appid: str, appsecret: str) -> Optional[str]:
-    """Get WeChat access_token with simple caching."""
+    """Get WeChat access_token with simple caching (thread-safe)."""
     now = time.time()
-    if _token_cache["access_token"] and _token_cache["expires_at"] > now + 60:
-        return _token_cache["access_token"]
+
+    with _token_lock:
+        if _token_cache["access_token"] and _token_cache["expires_at"] > now + 60:
+            return _token_cache["access_token"]
 
     url = "https://api.weixin.qq.com/cgi-bin/token"
     params = {"grant_type": "client_credential", "appid": appid, "secret": appsecret}
@@ -25,8 +29,9 @@ async def get_access_token(appid: str, appsecret: str) -> Optional[str]:
         data = resp.json()
 
     if "access_token" in data:
-        _token_cache["access_token"] = data["access_token"]
-        _token_cache["expires_at"] = now + data.get("expires_in", 7200) - 300
+        with _token_lock:
+            _token_cache["access_token"] = data["access_token"]
+            _token_cache["expires_at"] = now + data.get("expires_in", 7200) - 300
         return _token_cache["access_token"]
     else:
         raise Exception(f"获取 access_token 失败: {data.get('errmsg', str(data))}")

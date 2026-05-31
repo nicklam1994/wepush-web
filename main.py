@@ -31,6 +31,11 @@ from contextlib import asynccontextmanager
 from database import init_db, get_db
 from scheduler import init_scheduler
 
+from config import APP_TITLE, APP_HOST, APP_PORT
+from middleware.ratelimit import RateLimitMiddleware
+from middleware.auth import AuthMiddleware
+from middleware.csrf import CSRFTokenInjectorMiddleware, CSRFMiddleware
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -65,11 +70,17 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="WePush Web",
+    title=APP_TITLE,
     description="微信公眾號推送管理面板",
     version="1.0.0",
     lifespan=lifespan,
 )
+
+# ── 中間件（順序：速率限制 → 認證 → CSRF 注入 → CSRF 驗證）─
+app.add_middleware(RateLimitMiddleware)           # 1. 速率限制（最外層）
+app.add_middleware(AuthMiddleware)                 # 2. 認證檢查
+app.add_middleware(CSRFTokenInjectorMiddleware)   # 3. 注入 CSRF token 到 HTML
+app.add_middleware(CSRFMiddleware)                 # 4. 校驗 POST 請求的 CSRF token
 
 # 靜態文件
 static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
@@ -85,8 +96,8 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="WePush Web")
-    parser.add_argument("--host", default="0.0.0.0", help="监听地址")
-    parser.add_argument("--port", type=int, default=8765, help="监听端口")
+    parser.add_argument("--host", default=APP_HOST, help="监听地址")
+    parser.add_argument("--port", type=int, default=APP_PORT, help="监听端口")
     parser.add_argument("--reload", action="store_true", help="自动重载（开发用）")
     args = parser.parse_args()
 

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}登錄 - WePush Web{% endblock %}
+
+{% block content %}
+<div class="login-wrapper">
+    <div class="login-card">
+        <h2><i class="bi bi-shield-lock-fill"></i>WePush Web</h2>
+        <p class="subtitle">請輸入訪問密碼以繼續</p>
+
+        {% if error %}
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="post" action="/login">
+            <input type="hidden" name="next" value="{{ next_path }}">
+            <div class="mb-3 text-start">
+                <label for="password" class="form-label">訪問密碼</label>
+                <input
+                    type="password"
+                    class="form-control"
+                    id="password"
+                    name="password"
+                    placeholder="請輸入密碼"
+                    required
+                    autofocus
+                >
+            </div>
+            <button type="submit" class="btn btn-success btn-login">
+                <i class="bi bi-box-arrow-in-right"></i> 登錄
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
