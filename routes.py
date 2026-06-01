@@ -465,6 +465,7 @@ async def push_send(
     ds_weather: str = Form(""),
     ds_custom: str = Form(""),
     ds_amap: str = Form(""),
+    amap_city: str = Form("香港"),
     db: Session = Depends(get_db),
 ):
     try:
@@ -496,7 +497,7 @@ async def push_send(
         from apis import fetch_amap_weather_v2
         account = db.query(WechatAccount).filter(WechatAccount.is_active == True).first()
         if account and account.amap_key:
-            amap_vars = await fetch_amap_weather_v2(account.amap_key, "香港")
+            amap_vars = await fetch_amap_weather_v2(account.amap_key, amap_city)
             if amap_vars:
                 values = {k: v for k, v in values.items() if v}
                 values = {**amap_vars, **values}

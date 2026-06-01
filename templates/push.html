@@ -77,6 +77,34 @@
                                    onchange="togglePushDataSource()" style="border-color:#30363d;">
                             <label class="form-check-label" for="ds-amap">🌤 天氣數據 (高德，需Key)</label>
                         </div>
+                        <div id="push-amap-city" style="display:none;" class="mt-2 ms-4">
+                            <input type="text" name="amap_city" class="form-control form-control-sm"
+                                   placeholder="輸入城市名" value="香港" style="width:200px;"
+                                   list="amap-city-list" autocomplete="off">
+                            <datalist id="amap-city-list">
+                                <option value="香港">
+                                <option value="北京">
+                                <option value="上海">
+                                <option value="深圳">
+                                <option value="广州">
+                                <option value="杭州">
+                                <option value="成都">
+                                <option value="重庆">
+                                <option value="武汉">
+                                <option value="南京">
+                                <option value="台北">
+                                <option value="澳门">
+                            </datalist>
+                        </div>
+                    </div>
+
+                    <!-- 高德變量提示 -->
+                    <div id="push-amap-info" style="display:none;" class="border rounded p-3 mb-3">
+                        <small class="text-secondary">高德天氣變量：</small>
+                        <div class="mt-2" style="font-size:12px;line-height:1.8;">
+                            <code>temp</code> <code>weather</code> <code>humidity</code> <code>wind</code>
+                            <code>city</code> <code>province</code> <code>report_time</code>
+                        </div>
                     </div>
 
                     <!-- 天氣變量提示 -->
@@ -193,8 +221,11 @@ function submitPush(e) {
 function togglePushDataSource() {
     var weather = document.getElementById('ds-weather');
     var custom = document.getElementById('ds-custom');
+    var amap = document.getElementById('ds-amap');
     document.getElementById('push-weather-info').style.display = weather.checked ? 'block' : 'none';
     document.getElementById('push-custom-info').style.display = custom.checked ? 'block' : 'none';
+    document.getElementById('push-amap-city').style.display = amap.checked ? 'block' : 'none';
+    document.getElementById('push-amap-info').style.display = amap.checked ? 'block' : 'none';
     if (custom.checked) loadCustomFieldsHint();
 }
 
