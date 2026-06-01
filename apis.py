@@ -354,3 +354,32 @@ async def fetch_amap_weather_v2(api_key: str, city: str = "香港") -> Optional[
         "province": live.get("province", ""),
         "report_time": live.get("reporttime", ""),
     }
+
+
+async def fetch_openweather_v2(api_key: str, city: str = "Hong Kong") -> Optional[dict]:
+    """OpenWeather Current Weather API (簡化版)"""
+    if not api_key:
+        return None
+    url = "https://api.openweathermap.org/data/2.5/weather"
+    params = {"q": city, "appid": api_key, "units": "metric", "lang": "zh_cn"}
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(url, params=params)
+            data = resp.json()
+    except Exception:
+        return None
+    if data.get("cod") != 200:
+        return None
+    main = data.get("main", {})
+    wind = data.get("wind", {})
+    weather_list = data.get("weather", [])
+    weather_desc = weather_list[0].get("description", "") if weather_list else ""
+    return {
+        "temp": f"{main.get('temp', 'N/A')}°C",
+        "feels_like": f"{main.get('feels_like', 'N/A')}°C",
+        "humidity": f"{main.get('humidity', 'N/A')}%",
+        "pressure": f"{main.get('pressure', 'N/A')}hPa",
+        "weather": weather_desc,
+        "wind_speed": f"{wind.get('speed', 'N/A')}m/s",
+        "city": data.get("name", city),
+    }

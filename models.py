@@ -68,6 +68,7 @@ class WechatAccount(Base):
     appsecret = Column(String(500), nullable=False)  # stored encrypted
     is_active = Column(Boolean, default=True)
     amap_key = Column(String(200), default="", comment="高德地圖 API Key")
+    openweather_key = Column(String(200), default="", comment="OpenWeather API Key")
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 

@@ -182,46 +182,21 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">數據源</label>
-                        <select name="data_source" id="task-data-source" class="form-select"
-                                onchange="toggleDataSourceConfig()">
-                            <option value="manual">📄 靜態數據（手動填寫變量值）</option>
-                            <option value="weather">🌤 天氣數據</option>
-                            <option value="map">🗺 地圖 POI 數據</option>
-                            <option value="weather_map">🌤🗺 天氣 + 地圖數據</option>
-                        </select>
-                    </div>
-
-                    <!-- 數據源高級配置 -->
-                    <div id="data-source-config" class="border rounded p-3 mb-3" style="border-color:#30363d!important;display:none;">
-                        <div class="row">
-                            <div class="col-md-6 mb-2">
-                                <label class="form-label">高德 API Key</label>
-                                <input type="text" name="amap_key" id="config-amap-key" class="form-control"
-                                       placeholder="高德開放平台 Key">
-                            </div>
-                            <div class="col-md-6 mb-2">
-                                <label class="form-label">城市代碼</label>
-                                <input type="text" name="city_code" id="config-city-code" class="form-control"
-                                       value="440100" placeholder="440100=廣州">
-                            </div>
+                        <label class="form-label">數據源 <small class="text-secondary">（可多選）</small></label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="ds_weather" value="1" id="task-ds-weather"
+                                   onchange="toggleTaskDataSource()" style="border-color:#30363d;">
+                            <label class="form-check-label" for="task-ds-weather">🌤 天氣數據 (HKO 免費)</label>
                         </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-2">
-                                <label class="form-label">POI 關鍵詞</label>
-                                <input type="text" name="poi_keywords" id="config-poi-keywords" class="form-control"
-                                       placeholder="例如：美食">
-                            </div>
-                            <div class="col-md-6 mb-2">
-                                <label class="form-label">POI 城市</label>
-                                <input type="text" name="poi_city" id="config-poi-city" class="form-control"
-                                       value="广州" placeholder="廣州">
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="ds_amap" value="1" id="task-ds-amap"
+                                   onchange="toggleTaskDataSource()" style="border-color:#30363d;">
+                            <label class="form-check-label" for="task-ds-amap">🌤 天氣數據 (高德，需Key)</label>
                         </div>
-                        <div class="mb-2">
-                            <label class="form-label">OpenWeatherMap API Key（可選，覆蓋天氣數據）</label>
-                            <input type="text" name="openweathermap_key" id="config-owm-key" class="form-control"
-                                   placeholder="留空則使用香港天文台數據">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="ds_openweather" value="1" id="task-ds-openweather"
+                                   onchange="toggleTaskDataSource()" style="border-color:#30363d;">
+                            <label class="form-check-label" for="task-ds-openweather">🌍 天氣數據 (OpenWeather，需Key)</label>
                         </div>
                     </div>
 
@@ -248,6 +223,7 @@
                         </div>
                     </div>
 
+                    <input type="hidden" name="data_source" id="hidden-data-source" value="manual">
                     <input type="hidden" name="data_config" id="hidden-data-config" value="{}">
                     <input type="hidden" name="var_mapping" id="hidden-var-mapping" value="{}">
 
@@ -288,18 +264,16 @@ document.addEventListener('DOMContentLoaded', function() {
             cb.checked = rids.includes(parseInt(cb.value));
         });
 
-        // 數據源
+        // 數據源 (legacy: stored as single string like 'weather', 'manual', etc.)
         var ds = btn.getAttribute('data-data-source') || 'manual';
-        document.getElementById('task-data-source').value = ds;
-        toggleDataSourceConfig();
+        document.getElementById('hidden-data-source').value = ds;
 
         var dcfg = {};
         try { dcfg = JSON.parse(btn.getAttribute('data-data-config') || '{}'); } catch(e) {}
-        document.getElementById('config-amap-key').value = dcfg.amap_key || '';
-        document.getElementById('config-city-code').value = dcfg.city_code || '440100';
-        document.getElementById('config-poi-keywords').value = dcfg.poi_keywords || '';
-        document.getElementById('config-poi-city').value = dcfg.poi_city || '广州';
-        document.getElementById('config-owm-key').value = dcfg.openweathermap_key || '';
+        // Reset checkboxes
+        document.getElementById('task-ds-weather').checked = (ds === 'weather' || ds === 'weather_map');
+        document.getElementById('task-ds-amap').checked = (ds === 'map' || ds === 'weather_map');
+        document.getElementById('task-ds-openweather').checked = false; // legacy tasks won't have this
 
         // 變量映射
         var vmap = {};
@@ -325,13 +299,21 @@ document.addEventListener('DOMContentLoaded', function() {
             rids.push(parseInt(cb.value));
         });
 
-        // 數據源配置
+        // 數據源配置（儲存為兼容格式）
+        var dsWeather = document.getElementById('task-ds-weather').checked;
+        var dsAmap = document.getElementById('task-ds-amap').checked;
+        var dsOWM = document.getElementById('task-ds-openweather').checked;
         var dcfg = {};
-        dcfg.amap_key = document.getElementById('config-amap-key').value;
-        dcfg.city_code = document.getElementById('config-city-code').value;
-        dcfg.poi_keywords = document.getElementById('config-poi-keywords').value;
-        dcfg.poi_city = document.getElementById('config-poi-city').value;
-        dcfg.openweathermap_key = document.getElementById('config-owm-key').value;
+        dcfg.ds_weather = dsWeather ? '1' : '';
+        dcfg.ds_amap = dsAmap ? '1' : '';
+        dcfg.ds_openweather = dsOWM ? '1' : '';
+
+        // 向後兼容的 data_source 字符串
+        var dsStr = 'manual';
+        if (dsWeather && dsAmap) dsStr = 'weather_map';
+        else if (dsWeather) dsStr = 'weather';
+        else if (dsAmap) dsStr = 'map';
+        document.getElementById('hidden-data-source').value = dsStr;
 
         // 變量映射
         var vmap = {};
@@ -359,10 +341,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-function toggleDataSourceConfig() {
-    var val = document.getElementById('task-data-source').value;
-    var config = document.getElementById('data-source-config');
-    config.style.display = (val === 'manual') ? 'none' : 'block';
+function toggleTaskDataSource() {
+    // placeholder for future data source configuration panels
 }
 
 function addVarMapping(templateField, sourceField) {
@@ -371,12 +351,6 @@ function addVarMapping(templateField, sourceField) {
     div.className = 'input-group mb-2';
     div.style.cssText = 'gap: 8px;';
 
-    var fields = [];
-    document.querySelectorAll('input[name="recipient_ids"]:checked').forEach(function(cb) {
-        // 這裡我們用默認的 first, keyword1, keyword2, remark
-    });
-
-    // 從服務器獲取模板字段（簡化版）
     var fieldName = templateField || 'keyword' + (container.children.length + 1);
 
     div.innerHTML = '<code class="cron-badge" style="padding:6px 10px;font-size:12px;">' + fieldName + '</code>' +

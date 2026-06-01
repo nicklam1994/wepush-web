@@ -7,7 +7,8 @@
 
 <div class="row">
     <div class="col-md-8">
-        <div class="card">
+        <!-- 微信公眾號配置 -->
+        <div class="card mb-4">
             <div class="card-header"><i class="bi bi-wechat"></i> 微信公眾號配置</div>
             <div class="card-body">
                 <form method="post" action="/settings/account">
@@ -28,11 +29,23 @@
                                placeholder="請填寫 AppSecret">
                         <div class="form-text">微信公眾平台 → 開發 → 基本配置 → AppSecret</div>
                     </div>
+
+                    <!-- 天氣 API Key 配置 -->
+                    <hr class="border-secondary my-4">
+                    <h6 class="mb-3"><i class="bi bi-cloud-sun"></i> 天氣 API Key 配置</h6>
+                    <p class="text-secondary" style="font-size:13px;">用於天氣數據源，至少配置一個即可</p>
+
                     <div class="mb-3">
-                        <label class="form-label">高德地圖 API Key <small class="text-secondary">（可選，用於高德天氣數據）</small></label>
+                        <label class="form-label">高德地圖 API Key <small class="text-secondary">（可選）</small></label>
                         <input type="text" name="amap_key" value="{{ account.amap_key if account else '' }}" class="form-control"
                                placeholder="高德開放平台 Web服務 API Key">
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label">OpenWeather API Key <small class="text-secondary">（可選）</small></label>
+                        <input type="text" name="openweather_key" value="{{ account.openweather_key if account else '' }}" class="form-control"
+                               placeholder="OpenWeather API Key">
+                    </div>
+
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-check-lg"></i> 保存配置
                     </button>

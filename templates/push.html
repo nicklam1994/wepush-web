@@ -92,6 +92,15 @@
                                 <option value="南京"><option value="台北"><option value="澳门">
                             </datalist>
                         </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="ds_openweather" value="1" id="ds-openweather"
+                                   onchange="togglePushDataSource()" style="border-color:#30363d;">
+                            <label class="form-check-label" for="ds-openweather">🌍 天氣數據 (OpenWeather，需Key)</label>
+                        </div>
+                        <div id="push-openweather-city" style="display:none;" class="mt-2 ms-4">
+                            <input type="text" name="owm_city" class="form-control form-control-sm"
+                                   placeholder="城市名 (英文)" value="Hong Kong" style="width:200px;">
+                        </div>
                     </div>
 
                     <!-- 高德變量提示 -->
@@ -100,6 +109,15 @@
                         <div class="mt-2" style="font-size:12px;line-height:1.8;">
                             <code>temp</code> <code>weather</code> <code>humidity</code> <code>wind</code>
                             <code>city</code> <code>province</code> <code>report_time</code>
+                        </div>
+                    </div>
+
+                    <!-- OpenWeather 變量提示 -->
+                    <div id="push-owm-info" style="display:none;" class="border rounded p-3 mb-3">
+                        <small class="text-secondary">OpenWeather 變量：</small>
+                        <div class="mt-2" style="font-size:12px;line-height:1.8;">
+                            <code>temp</code> <code>feels_like</code> <code>humidity</code> <code>pressure</code>
+                            <code>weather</code> <code>wind_speed</code> <code>city</code>
                         </div>
                     </div>
 
@@ -201,11 +219,14 @@ function submitPush(e) {
 }
 
 function togglePushDataSource() {
-    var w = document.getElementById('ds-weather'), c = document.getElementById('ds-custom'), a = document.getElementById('ds-amap');
+    var w = document.getElementById('ds-weather'), c = document.getElementById('ds-custom'),
+        a = document.getElementById('ds-amap'), o = document.getElementById('ds-openweather');
     document.getElementById('push-weather-info').style.display = w.checked ? 'block' : 'none';
     document.getElementById('push-custom-info').style.display = c.checked ? 'block' : 'none';
     document.getElementById('push-amap-city').style.display = a.checked ? 'block' : 'none';
     document.getElementById('push-amap-info').style.display = a.checked ? 'block' : 'none';
+    document.getElementById('push-openweather-city').style.display = o.checked ? 'block' : 'none';
+    document.getElementById('push-owm-info').style.display = o.checked ? 'block' : 'none';
     if (c.checked) loadCustomFieldsHint();
 }
 

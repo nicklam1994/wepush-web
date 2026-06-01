@@ -78,6 +78,7 @@ async def save_account(
     appid: str = Form(...),
     appsecret: str = Form(...),
     amap_key: str = Form(""),
+    openweather_key: str = Form(""),
     db: Session = Depends(get_db),
 ):
     account = db.query(WechatAccount).first()
@@ -86,6 +87,7 @@ async def save_account(
         account.appid = appid
         account.appsecret = appsecret
         account.amap_key = amap_key
+        account.openweather_key = openweather_key
         account.updated_at = datetime.now()
     else:
         account = WechatAccount(name=name, appid=appid, appsecret=appsecret)
@@ -466,6 +468,8 @@ async def push_send(
     ds_custom: str = Form(""),
     ds_amap: str = Form(""),
     amap_city: str = Form("香港"),
+    ds_openweather: str = Form(""),
+    owm_city: str = Form("Hong Kong"),
     db: Session = Depends(get_db),
 ):
     try:
@@ -501,6 +505,16 @@ async def push_send(
             if amap_vars:
                 values = {k: v for k, v in values.items() if v}
                 values = {**amap_vars, **values}
+
+    # OpenWeather 數據源
+    if ds_openweather == "1":
+        from apis import fetch_openweather_v2
+        account = db.query(WechatAccount).filter(WechatAccount.is_active == True).first()
+        if account and account.openweather_key:
+            owm_vars = await fetch_openweather_v2(account.openweather_key, owm_city)
+            if owm_vars:
+                values = {k: v for k, v in values.items() if v}
+                values = {**owm_vars, **values}
 
     result = await _manual_push_async(
         template_id=template_id,
