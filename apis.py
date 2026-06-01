@@ -50,6 +50,8 @@ async def fetch_weather_hko() -> Optional[dict]:
         "uv_intensity": regional.get("uv_intensity", ""),
         # 日期
         "date_display": hdr.get("date_display", ""),
+        # 簡短描述（截取第一句，避免撐破排版）
+        "weather_short": (flw.get("forecast_desc", "").split("。")[0] + "。") if flw.get("forecast_desc") else "",
     }
 
 
