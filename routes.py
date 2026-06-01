@@ -474,9 +474,9 @@ async def push_send(
     if data_source != "manual":
         from apis import resolve_data_source
         api_vars = await resolve_data_source(data_source, {})
-        # API 變量合併到手動值之上（手動值優先）
-        merged = {**api_vars, **values}
-        values = merged
+        # API 變量優先，手動輸入的非空值可覆蓋
+        values = {k: v for k, v in values.items() if v}  # 過濾空值
+        values = {**api_vars, **values}
 
     result = await _manual_push_async(
         template_id=template_id,
