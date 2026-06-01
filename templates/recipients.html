@@ -31,7 +31,7 @@
                     <td class="text-secondary">{{ r.note or '—' }}</td>
                     <td class="text-secondary">{{ r.created_at.strftime('%m-%d %H:%M') }}</td>
                     <td>
-                        <button class="btn btn-sm btn-outline-secondary"
+                        <button class="btn btn-sm btn-outline-danger"
                                 data-bs-toggle="modal" data-bs-target="#recipientModal"
                                 data-id="{{ r.id }}" data-nickname="{{ r.nickname }}"
                                 data-openid="{{ r.openid }}" data-note="{{ r.note }}">
@@ -39,7 +39,7 @@
                         </button>
                         <form method="post" action="/recipients/{{ r.id }}/delete" style="display:inline"
                               onsubmit="return confirm('確定刪除嗎？')">
-                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>
