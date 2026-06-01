@@ -1,6 +1,7 @@
 """External API integrations — HKO weather via weather_hko package."""
 import sys
 import os
+import openpyxl
 import httpx
 from typing import Optional
 from datetime import datetime
@@ -212,3 +213,129 @@ def resolve_custom_dates(custom_dates: list) -> dict:
             pass
 
     return variables
+
+
+# ─── 高德天氣 API v2（帶 adcode 自動查找）───
+
+_adcode_cache: Optional[dict] = None
+
+
+def _load_adcode_xlsx() -> dict:
+    """懶加載高德 adcode xlsx，緩存為 {城市名: adcode}"""
+    global _adcode_cache
+    if _adcode_cache is not None:
+        return _adcode_cache
+
+    xlsx_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "AMap_adcode_citycode.xlsx")
+    if not os.path.exists(xlsx_path):
+        _adcode_cache = {}
+        return _adcode_cache
+
+    wb = openpyxl.load_workbook(xlsx_path, read_only=True)
+    ws = wb["Sheet1"]
+    _adcode_cache = {}
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        name = row[0]
+        adcode = row[1]
+        if name and adcode is not None:
+            _adcode_cache[str(name).strip()] = str(adcode).strip()
+    wb.close()
+    return _adcode_cache
+
+
+def _lookup_adcode(city_name: str) -> Optional[str]:
+    """根據城市名模糊匹配 adcode"""
+    adcode_map = _load_adcode_xlsx()
+    if not adcode_map:
+        return None
+
+    city_name = city_name.strip()
+
+    # 繁簡轉換表（常見城市用字）
+    _t2s = {
+        "廣": "广", "臺": "台", "東": "东", "門": "门", "萬": "万",
+        "區": "区", "號": "号", "縣": "县", "鎮": "镇", "雲": "云",
+        "亞": "亚", "蕭": "萧", "為": "为", "豐": "丰", "長": "长",
+        "蘇": "苏", "蘭": "兰", "連": "连", "鄭": "郑", "滬": "沪",
+        "爾": "尔", "龍": "龙", "龜": "龟",
+    }
+
+    def _simplify(s: str) -> str:
+        return "".join(_t2s.get(c, c) for c in s)
+
+    # 精確匹配
+    if city_name in adcode_map:
+        return adcode_map[city_name]
+
+    # 繁簡轉換後精確匹配
+    simplified = _simplify(city_name)
+    if simplified != city_name and simplified in adcode_map:
+        return adcode_map[simplified]
+
+    # 模糊匹配：去掉「市」「省」「自治区」等後綴
+    suffixes = ["市", "省", "自治区", "特别行政区", "地區", "地区"]
+    for suffix in suffixes:
+        if city_name.endswith(suffix):
+            base = city_name[:-len(suffix)]
+            if base in adcode_map:
+                return adcode_map[base]
+            # 繁簡轉換後再試
+            base_s = _simplify(base)
+            if base_s != base and base_s in adcode_map:
+                return adcode_map[base_s]
+            # 嘗試加「市」
+            if (base + "市") in adcode_map:
+                return adcode_map[base + "市"]
+            if (base_s + "市") in adcode_map:
+                return adcode_map[base_s + "市"]
+            # 嘗試加「省」
+            if (base + "省") in adcode_map:
+                return adcode_map[base + "省"]
+
+    # 反向：給定名稱+市 來匹配
+    if (city_name + "市") in adcode_map:
+        return adcode_map[city_name + "市"]
+    if (simplified + "市") in adcode_map:
+        return adcode_map[simplified + "市"]
+
+    # 部分匹配：檢查 adcode_map 中是否有 key 包含城市名
+    for key, adcode in adcode_map.items():
+        if city_name in key or simplified in key:
+            return adcode
+
+    return None
+
+
+async def fetch_amap_weather_v2(api_key: str, city: str = "香港") -> Optional[dict]:
+    """高德天氣 API v2 — 自動查詢 adcode"""
+    if not api_key:
+        return None
+
+    # 查找 adcode（從 xlsx）
+    adcode = _lookup_adcode(city)
+    if not adcode:
+        adcode = "810000"  # default 香港
+
+    url = "https://restapi.amap.com/v3/weather/weatherInfo"
+    params = {"key": api_key, "city": adcode, "extensions": "base"}
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(url, params=params)
+            data = resp.json()
+    except Exception:
+        return None
+
+    if data.get("status") != "1" or not data.get("lives"):
+        return None
+
+    live = data["lives"][0]
+    return {
+        "temp": f"{live.get('temperature', 'N/A')}°C",
+        "weather": live.get("weather", ""),
+        "humidity": f"{live.get('humidity', 'N/A')}%",
+        "wind": f"{live.get('winddirection', '')}风 {live.get('windpower', '')}级",
+        "city": live.get("city", ""),
+        "province": live.get("province", ""),
+        "report_time": live.get("reporttime", ""),
+    }

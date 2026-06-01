@@ -77,6 +77,7 @@ async def save_account(
     name: str = Form("默认账号"),
     appid: str = Form(...),
     appsecret: str = Form(...),
+    amap_key: str = Form(""),
     db: Session = Depends(get_db),
 ):
     account = db.query(WechatAccount).first()
@@ -84,6 +85,7 @@ async def save_account(
         account.name = name
         account.appid = appid
         account.appsecret = appsecret
+        account.amap_key = amap_key
         account.updated_at = datetime.now()
     else:
         account = WechatAccount(name=name, appid=appid, appsecret=appsecret)
@@ -462,6 +464,7 @@ async def push_send(
     var_values: str = Form("{}"),
     ds_weather: str = Form(""),
     ds_custom: str = Form(""),
+    ds_amap: str = Form(""),
     db: Session = Depends(get_db),
 ):
     try:
@@ -487,6 +490,16 @@ async def push_send(
         date_vars = resolve_custom_dates(cdates)
         values = {k: v for k, v in values.items() if v}
         values = {**date_vars, **values}
+
+    # 高德天氣數據源
+    if ds_amap == "1":
+        from apis import fetch_amap_weather_v2
+        account = db.query(WechatAccount).filter(WechatAccount.is_active == True).first()
+        if account and account.amap_key:
+            amap_vars = await fetch_amap_weather_v2(account.amap_key, "香港")
+            if amap_vars:
+                values = {k: v for k, v in values.items() if v}
+                values = {**amap_vars, **values}
 
     result = await _manual_push_async(
         template_id=template_id,

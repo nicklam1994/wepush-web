@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="page-header">
-    <h2>⚙️ 帳號設置</h2>
+    <h2>⚙️ 設置</h2>
     <p>配置微信公眾號測試號或正式號信息</p>
 </div>
 
@@ -27,6 +27,11 @@
                         <input type="password" name="appsecret" class="form-control" value="{{ account.appsecret if account else '' }}" required
                                placeholder="請填寫 AppSecret">
                         <div class="form-text">微信公眾平台 → 開發 → 基本配置 → AppSecret</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">高德地圖 API Key <small class="text-secondary">（可選，用於高德天氣數據）</small></label>
+                        <input type="text" name="amap_key" value="{{ account.amap_key if account else '' }}" class="form-control"
+                               placeholder="高德開放平台 Web服務 API Key">
                     </div>
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-check-lg"></i> 保存配置
