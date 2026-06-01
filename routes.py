@@ -460,6 +460,7 @@ async def push_send(
     template_id: int = Form(...),
     recipient_ids: str = Form("[]"),
     var_values: str = Form("{}"),
+    data_source: str = Form("manual"),
     db: Session = Depends(get_db),
 ):
     try:
@@ -468,6 +469,14 @@ async def push_send(
     except json.JSONDecodeError as e:
         logger.warning(f"Invalid JSON in push form: {e}")
         return RedirectResponse(url="/push", status_code=303)
+
+    # 如果選擇了數據源，自動解析變量
+    if data_source != "manual":
+        from apis import resolve_data_source
+        api_vars = await resolve_data_source(data_source, {})
+        # API 變量合併到手動值之上（手動值優先）
+        merged = {**api_vars, **values}
+        values = merged
 
     result = await _manual_push_async(
         template_id=template_id,

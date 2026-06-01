@@ -61,6 +61,18 @@
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label">數據源</label>
+                        <select name="data_source" id="push-data-source" class="form-select"
+                                onchange="togglePushDataSource()">
+                            <option value="manual">📄 手動填寫</option>
+                            <option value="weather">🌤 天氣數據 (HKO 免費)</option>
+                        </select>
+                    </div>
+                    <div id="push-data-config" style="display:none;" class="border rounded p-3 mb-3">
+                        <small class="text-secondary">✅ 自動拉取 HKO 香港天文台天氣數據，無需 API Key</small>
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label">模板字段值</label>
                         <div id="template-fields-container" class="text-secondary" style="font-size:13px;">
                             請先選擇模板
@@ -151,6 +163,12 @@ function submitPush(e) {
 
     // 提交表單
     e.target.closest('form').submit();
+}
+
+function togglePushDataSource() {
+    var val = document.getElementById('push-data-source').value;
+    var config = document.getElementById('push-data-config');
+    config.style.display = (val === 'manual') ? 'none' : 'block';
 }
 </script>
 {% endblock %}
