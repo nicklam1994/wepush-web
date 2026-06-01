@@ -72,15 +72,34 @@ def build_template_data(data_fields: list, values: dict) -> dict:
     """
     根据模板字段定义 + 实际值, 构建微信要求的 data 结构
 
-    data_fields: [{"name":"first","value":"您好","color":"#000000"}, ...]
-    values: {"first":"实际标题", "keyword1":"实际内容", ...}
+    data_fields: [{"name":"first","value":"{{temp}}","color":"#000000"}, ...]
+    values: {"temp":"30.1°C", "humidity":"72%", ...}
+
+    支援 {{var}} 變量替換：若 default_value 含 {{var}} 且 values 有對應 key，自動替換
     """
+    import re
+
     result = {}
     for field in data_fields:
         name = field.get("name", "")
         default_value = field.get("value", "")
         color = field.get("color", "#000000")
-        actual_value = values.get(name, default_value)
+
+        # 1. 直接匹配：values 中有同名字段
+        if name in values and values[name]:
+            actual_value = values[name]
+        # 2. {{var}} 變量替換
+        elif "{{" in default_value:
+            actual_value = default_value
+            for var_name in re.findall(r"\{\{(\w+)\}\}", default_value):
+                if var_name in values and values[var_name]:
+                    actual_value = actual_value.replace(f"{{{{{var_name}}}}}", str(values[var_name]))
+                else:
+                    actual_value = actual_value.replace(f"{{{{{var_name}}}}}", "")
+        # 3. 預設值
+        else:
+            actual_value = default_value
+
         result[name] = {"value": actual_value, "color": color}
     return result
 
