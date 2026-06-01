@@ -198,6 +198,11 @@
                                    onchange="toggleTaskDataSource()" style="border-color:#30363d;">
                             <label class="form-check-label" for="task-ds-openweather">🌍 天氣數據 (OpenWeather，需Key)</label>
                         </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="ds_custom" value="1" id="task-ds-custom"
+                                   onchange="toggleTaskDataSource()" style="border-color:#30363d;">
+                            <label class="form-check-label" for="task-ds-custom">📅 自定義字段</label>
+                        </div>
                     </div>
 
                     <!-- 變量映射 -->
@@ -274,6 +279,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('task-ds-weather').checked = (ds === 'weather' || ds === 'weather_map');
         document.getElementById('task-ds-amap').checked = (ds === 'map' || ds === 'weather_map');
         document.getElementById('task-ds-openweather').checked = false; // legacy tasks won't have this
+        document.getElementById('task-ds-custom').checked = false;
 
         // 變量映射
         var vmap = {};
@@ -303,10 +309,12 @@ document.addEventListener('DOMContentLoaded', function() {
         var dsWeather = document.getElementById('task-ds-weather').checked;
         var dsAmap = document.getElementById('task-ds-amap').checked;
         var dsOWM = document.getElementById('task-ds-openweather').checked;
+        var dsCustom = document.getElementById('task-ds-custom').checked;
         var dcfg = {};
         dcfg.ds_weather = dsWeather ? '1' : '';
         dcfg.ds_amap = dsAmap ? '1' : '';
         dcfg.ds_openweather = dsOWM ? '1' : '';
+        dcfg.ds_custom = dsCustom ? '1' : '';
 
         // 向後兼容的 data_source 字符串
         var dsStr = 'manual';
