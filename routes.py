@@ -590,3 +590,52 @@ async def template_preview(tid: int, db: Session = Depends(get_db)):
 
     built = build_template_data(fields, example_data)
     return JSONResponse({"fields": fields, "example_data": built})
+
+
+# ─── 自定義字段 ──────────────────────────────────────
+@router.get("/custom-fields")
+async def custom_fields_page(request: Request, db: Session = Depends(get_db)):
+    from models import DateEvent
+    events = db.query(DateEvent).order_by(DateEvent.created_at).all()
+    return templates.TemplateResponse(request, "custom_fields.html", {
+        "request": request,
+        "events": events,
+        "page": "custom_fields",
+    })
+
+
+@router.post("/custom-fields/save")
+async def custom_field_save(
+    request: Request,
+    eid: Optional[int] = Form(None),
+    name: str = Form(...),
+    target_date: str = Form(...),
+    direction: str = Form("countdown"),
+    db: Session = Depends(get_db),
+):
+    from models import DateEvent
+    if eid:
+        item = db.query(DateEvent).filter(DateEvent.id == eid).first()
+        if item:
+            item.name = name
+            item.target_date = target_date
+            item.direction = direction
+    else:
+        item = DateEvent(name=name, target_date=target_date, direction=direction)
+        db.add(item)
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Failed to save date event: {e}")
+    return RedirectResponse(url="/custom-fields", status_code=303)
+
+
+@router.post("/custom-fields/{eid}/delete")
+async def custom_field_delete(eid: int, db: Session = Depends(get_db)):
+    from models import DateEvent
+    item = db.query(DateEvent).filter(DateEvent.id == eid).first()
+    if item:
+        db.delete(item)
+        db.commit()
+    return RedirectResponse(url="/custom-fields", status_code=303)

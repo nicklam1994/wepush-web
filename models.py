@@ -148,3 +148,14 @@ class PushHistory(Base):
     details = Column(JSON, default=list, comment="推送详情")
     status = Column(String(20), default="pending", comment="pending/success/partial/fail")
     created_at = Column(DateTime, default=datetime.now)
+
+
+class DateEvent(Base):
+    """自定義日期事件（倒計時/正計時）"""
+    __tablename__ = "date_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False, comment="事件名稱")
+    target_date = Column(String(10), nullable=False, comment="目標日期 YYYY-MM-DD")
+    direction = Column(String(20), default="countdown", comment="countdown/countup")
+    created_at = Column(DateTime, default=datetime.now)

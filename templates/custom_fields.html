@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2>📅 自定義字段</h2>
+        <p>管理倒計時/正計時日期事件</p>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dateModal">
+        <i class="bi bi-plus"></i> 新建事件
+    </button>
+</div>
+
+{% if events %}
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>事件名稱</th>
+                    <th>目標日期</th>
+                    <th>模式</th>
+                    <th>剩餘天數</th>
+                    <th>生成變量</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in events %}
+                <tr>
+                    <td><strong>{{ e.name }}</strong></td>
+                    <td><code class="cron-badge">{{ e.target_date }}</code></td>
+                    <td>
+                        {% if e.direction == 'countup' %}
+                        <span class="badge badge-secondary">📈 正計時</span>
+                        {% else %}
+                        <span class="badge badge-secondary">📉 倒計時</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% set target = e.target_date | string %}
+                        {% set days = (target | string)[:10] %}
+                        <span class="text-secondary">自動計算</span>
+                    </td>
+                    <td>
+                        {% if e.direction == 'countup' %}
+                        <code class="cron-badge">{{ '{{' + e.name + '_天數}}' }}</code>
+                        {% else %}
+                        <code class="cron-badge">{{ '{{' + e.name + '_倒數}}' }}</code>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#dateModal"
+                                data-eid="{{ e.id }}" data-name="{{ e.name }}" data-date="{{ e.target_date }}" data-dir="{{ e.direction }}">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <form method="post" action="/custom-fields/{{ e.id }}/delete" style="display:inline"
+                              onsubmit="return confirm('確定刪除「{{ e.name }}」？')">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body">
+        <div class="empty-state">
+            <i class="bi bi-calendar-heart"></i>
+            <p>還沒有自定義日期事件</p>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dateModal">
+                <i class="bi bi-plus"></i> 新建事件
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal -->
+<div class="modal fade" id="dateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background:#161b22;border-color:#30363d;">
+            <form method="post" action="/custom-fields/save">
+                <div class="modal-header" style="border-color:#30363d;">
+                    <h5 class="modal-title">日期事件</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="eid" id="date-eid">
+                    <div class="mb-3">
+                        <label class="form-label">事件名稱 <span class="text-danger">*</span></label>
+                        <input type="text" name="name" id="date-name" class="form-control" required
+                               placeholder="例如：媽媽生日">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">目標日期 <span class="text-danger">*</span></label>
+                        <input type="date" name="target_date" id="date-target" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">模式</label>
+                        <select name="direction" id="date-direction" class="form-select">
+                            <option value="countdown">📉 倒計時（距離目標還有 N 天）</option>
+                            <option value="countup">📈 正計時（已經過了 N 天）</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-color:#30363d;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Modal 編輯回填
+document.getElementById('dateModal').addEventListener('show.bs.modal', function(event) {
+    var btn = event.relatedTarget;
+    var eid = btn.getAttribute('data-eid');
+    if (eid) {
+        document.getElementById('date-eid').value = eid;
+        document.getElementById('date-name').value = btn.getAttribute('data-name');
+        document.getElementById('date-target').value = btn.getAttribute('data-date');
+        document.getElementById('date-direction').value = btn.getAttribute('data-dir');
+    } else {
+        document.getElementById('date-eid').value = '';
+        document.getElementById('date-name').value = '';
+        document.getElementById('date-target').value = '';
+        document.getElementById('date-direction').value = 'countdown';
+    }
+});
+</script>
+{% endblock %}
