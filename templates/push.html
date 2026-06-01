@@ -78,22 +78,18 @@
                             <label class="form-check-label" for="ds-amap">🌤 天氣數據 (高德，需Key)</label>
                         </div>
                         <div id="push-amap-city" style="display:none;" class="mt-2 ms-4">
-                            <input type="text" name="amap_city" class="form-control form-control-sm"
-                                   placeholder="輸入城市名" value="香港" style="width:200px;"
-                                   list="amap-city-list" autocomplete="off">
+                            <div class="input-group input-group-sm" style="width:300px;">
+                                <input type="text" name="amap_city" id="amap-city-input" class="form-control form-control-sm"
+                                       placeholder="輸入城市名" value="香港"
+                                       list="amap-city-list" autocomplete="off"
+                                       oninput="lookupAdcode()">
+                                <span id="amap-city-status" class="input-group-text" style="background:#161b22;border-color:#30363d;font-size:11px;"></span>
+                            </div>
                             <datalist id="amap-city-list">
-                                <option value="香港">
-                                <option value="北京">
-                                <option value="上海">
-                                <option value="深圳">
-                                <option value="广州">
-                                <option value="杭州">
-                                <option value="成都">
-                                <option value="重庆">
-                                <option value="武汉">
-                                <option value="南京">
-                                <option value="台北">
-                                <option value="澳门">
+                                <option value="香港"><option value="北京"><option value="上海">
+                                <option value="深圳"><option value="广州"><option value="杭州">
+                                <option value="成都"><option value="重庆"><option value="武汉">
+                                <option value="南京"><option value="台北"><option value="澳门">
                             </datalist>
                         </div>
                     </div>
@@ -119,9 +115,9 @@
 
                     <!-- 自定義字段提示 -->
                     <div id="push-custom-info" style="display:none;" class="border rounded p-3 mb-3">
-                        <small class="text-secondary">已定義的自定義字段（在 <a href=\"/custom-fields\" class=\"text-info\">自定義字段</a> 頁面管理）：</small>
-                        <div id="custom-fields-hint" class=\"mt-2\" style=\"font-size:12px;line-height:1.8;\">
-                            <span class=\"text-secondary\">載入中...</span>
+                        <small class="text-secondary">已定義的自定義字段：</small>
+                        <div id="custom-fields-hint" class="mt-2" style="font-size:12px;line-height:1.8;">
+                            <span class="text-secondary">載入中...</span>
                         </div>
                     </div>
 
@@ -164,9 +160,7 @@
 
 {% block scripts %}
 <script>
-// 模板字段定義緩存
 var templateFields = {};
-
 {% for t in templates %}
 templateFields[{{ t.id }}] = {{ t.data_fields|tojson }};
 {% endfor %}
@@ -175,58 +169,61 @@ function loadTemplateFields() {
     var sel = document.getElementById('push-template');
     var tid = parseInt(sel.value);
     var container = document.getElementById('template-fields-container');
-
     if (!tid || !templateFields[tid]) {
         container.innerHTML = '<span class="text-secondary">請先選擇模板</span>';
         return;
     }
-
     var fields = templateFields[tid];
     var html = '';
     fields.forEach(function(f) {
-        var name = f.name || '';
-        var value = f.value || '';
         html += '<div class="mb-2 row align-items-center">' +
-            '<div class="col-sm-3"><label class="form-label mb-0" style="font-family:monospace;">' + name + '</label></div>' +
-            '<div class="col-sm-9">' +
-            '<input type="text" class="form-control template-field" data-name="' + name + '" value="' + value + '" placeholder="輸入 ' + name + ' 的值">' +
-            '</div></div>';
+            '<div class="col-sm-3"><label class="form-label mb-0" style="font-family:monospace;">' + f.name + '</label></div>' +
+            '<div class="col-sm-9"><input type="text" class="form-control template-field" data-name="' + f.name + '" value="' + (f.value||'') + '"></div>' +
+            '</div>';
     });
     container.innerHTML = html || '<span class="text-secondary">該模板無字段</span>';
 }
 
-// 初始加載
 document.addEventListener('DOMContentLoaded', function() {
     var sel = document.getElementById('push-template');
     if (sel.value) loadTemplateFields();
+    lookupAdcode();
 });
 
 function submitPush(e) {
     e.preventDefault();
-
-    // 構建變量映射
     var values = {};
     document.querySelectorAll('.template-field').forEach(function(input) {
         values[input.getAttribute('data-name')] = input.value;
     });
-
-    // 寫入 hidden
-    var hidden = document.getElementById('hidden-var-values');
-    hidden.value = JSON.stringify(values);
-
-    // 提交表單
+    document.getElementById('hidden-var-values').value = JSON.stringify(values);
     e.target.closest('form').submit();
 }
 
 function togglePushDataSource() {
-    var weather = document.getElementById('ds-weather');
-    var custom = document.getElementById('ds-custom');
-    var amap = document.getElementById('ds-amap');
-    document.getElementById('push-weather-info').style.display = weather.checked ? 'block' : 'none';
-    document.getElementById('push-custom-info').style.display = custom.checked ? 'block' : 'none';
-    document.getElementById('push-amap-city').style.display = amap.checked ? 'block' : 'none';
-    document.getElementById('push-amap-info').style.display = amap.checked ? 'block' : 'none';
-    if (custom.checked) loadCustomFieldsHint();
+    var w = document.getElementById('ds-weather'), c = document.getElementById('ds-custom'), a = document.getElementById('ds-amap');
+    document.getElementById('push-weather-info').style.display = w.checked ? 'block' : 'none';
+    document.getElementById('push-custom-info').style.display = c.checked ? 'block' : 'none';
+    document.getElementById('push-amap-city').style.display = a.checked ? 'block' : 'none';
+    document.getElementById('push-amap-info').style.display = a.checked ? 'block' : 'none';
+    if (c.checked) loadCustomFieldsHint();
+}
+
+function lookupAdcode() {
+    var city = document.getElementById('amap-city-input').value.trim();
+    var status = document.getElementById('amap-city-status');
+    if (!city) { status.innerHTML = ''; return; }
+    fetch('/api/amap/lookup?city=' + encodeURIComponent(city))
+        .then(r => r.json())
+        .then(data => {
+            if (data.found) {
+                status.innerHTML = '✅ ' + data.adcode;
+                status.style.color = '#3fb950';
+            } else {
+                status.innerHTML = '❌ 未找到';
+                status.style.color = '#f85149';
+            }
+        });
 }
 
 function loadCustomFieldsHint() {
@@ -237,9 +234,7 @@ function loadCustomFieldsHint() {
             if (data.length === 0) {
                 hint.innerHTML = '<span class="text-secondary">尚無自定義字段，<a href="/custom-fields" class="text-info">前往創建</a></span>';
             } else {
-                hint.innerHTML = data.map(e => {
-                    return '<code>' + '{{' + e.field_name + '}}' + '</code>';
-                }).join(' ');
+                hint.innerHTML = data.map(e => '<code>{{' + e.field_name + '}}</code>').join(' ');
             }
         });
 }

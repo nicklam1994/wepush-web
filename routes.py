@@ -695,6 +695,14 @@ async def custom_field_delete(eid: int, db: Session = Depends(get_db)):
     return RedirectResponse(url="/custom-fields", status_code=303)
 
 
+@router.get("/api/amap/lookup")
+async def amap_lookup(city: str = Query(...)):
+    """查詢城市 adcode"""
+    from apis import _lookup_adcode
+    code = _lookup_adcode(city.strip())
+    return JSONResponse({"city": city, "adcode": code, "found": code is not None})
+
+
 @router.get("/api/custom-fields/list")
 async def custom_fields_list(db: Session = Depends(get_db)):
     """返回自定義字段列表 (JSON)"""
