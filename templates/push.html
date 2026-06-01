@@ -202,8 +202,7 @@ function loadCustomFieldsHint() {
                 hint.innerHTML = '<span class="text-secondary">尚無自定義字段，<a href="/custom-fields" class="text-info">前往創建</a></span>';
             } else {
                 hint.innerHTML = data.map(e => {
-                    var key = e.direction === 'countup' ? e.name + '_天數' : e.name + '_倒數';
-                    return '<code>' + '{{' + key + '}}' + '</code>';
+                    return '<code>' + '{{' + e.field_name + '}}' + '</code>';
                 }).join(' ');
             }
         });

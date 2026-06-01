@@ -158,6 +158,7 @@ class DateEvent(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False, comment="事件名稱")
+    field_name = Column(String(100), nullable=False, unique=True, comment="英文變量名")
     target_date = Column(String(10), nullable=False, comment="目標日期 YYYY-MM-DD")
     direction = Column(String(20), default="countdown", comment="countdown/countup")
     created_at = Column(DateTime, default=datetime.now)

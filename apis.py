@@ -192,7 +192,7 @@ def resolve_custom_dates(custom_dates: list) -> dict:
         date_str = cd.get("date", "").strip()
         direction = cd.get("direction", "countdown")
 
-        if not label or not date_str:
+        if not field_name or not date_str:
             continue
 
         try:
@@ -205,11 +205,9 @@ def resolve_custom_dates(custom_dates: list) -> dict:
             delta = (target - today).days
 
             if direction == "countdown":
-                key = f"{label}_倒數"
-                variables[key] = f"{delta}天" if delta >= 0 else f"已過{-delta}天"
+                variables[field_name] = f"{delta}天" if delta >= 0 else f"已過{-delta}天"
             else:
-                key = f"{label}_天數"
-                variables[key] = f"{delta}天"
+                variables[field_name] = f"{delta}天"
         except (ValueError, TypeError):
             pass
 

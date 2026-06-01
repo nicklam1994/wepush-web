@@ -17,6 +17,7 @@
             <thead>
                 <tr>
                     <th>事件名稱</th>
+                    <th>變量名</th>
                     <th>目標日期</th>
                     <th>模式</th>
                     <th>剩餘天數</th>
@@ -28,6 +29,7 @@
                 {% for e in events %}
                 <tr>
                     <td><strong>{{ e.name }}</strong></td>
+                    <td><code class="cron-badge">{{ e.field_name }}</code></td>
                     <td><code class="cron-badge">{{ e.target_date }}</code></td>
                     <td>
                         {% if e.direction == 'countup' %}
@@ -54,7 +56,7 @@
                     </td>
                     <td>
                         <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#dateModal"
-                                data-eid="{{ e.id }}" data-name="{{ e.name }}" data-date="{{ e.target_date }}" data-dir="{{ e.direction }}">
+                                data-eid="{{ e.id }}" data-name="{{ e.name }}" data-fname="{{ e.field_name }}" data-date="{{ e.target_date }}" data-dir="{{ e.direction }}">
                             <i class="bi bi-pencil"></i>
                         </button>
                         <form method="post" action="/custom-fields/{{ e.id }}/delete" style="display:inline"
@@ -101,6 +103,11 @@
                                placeholder="例如：媽媽生日">
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">變量名 <small class="text-secondary">（英文，留空自動生成）</small></label>
+                        <input type="text" name="field_name" id="date-fname" class="form-control"
+                               placeholder="例如：momsBirthday" pattern="[a-zA-Z0-9_]+">
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">目標日期 <span class="text-danger">*</span></label>
                         <input type="date" name="target_date" id="date-target" class="form-control" required>
                     </div>
@@ -131,11 +138,13 @@ document.getElementById('dateModal').addEventListener('show.bs.modal', function(
     if (eid) {
         document.getElementById('date-eid').value = eid;
         document.getElementById('date-name').value = btn.getAttribute('data-name');
+        document.getElementById('date-fname').value = btn.getAttribute('data-fname') || '';
         document.getElementById('date-target').value = btn.getAttribute('data-date');
         document.getElementById('date-direction').value = btn.getAttribute('data-dir');
     } else {
         document.getElementById('date-eid').value = '';
         document.getElementById('date-name').value = '';
+        document.getElementById('date-fname').value = '';
         document.getElementById('date-target').value = '';
         document.getElementById('date-direction').value = 'countdown';
     }

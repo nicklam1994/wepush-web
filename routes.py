@@ -483,7 +483,7 @@ async def push_send(
         from models import DateEvent
         from apis import resolve_custom_dates
         db_events = db.query(DateEvent).all()
-        cdates = [{"label": e.name, "date": e.target_date, "direction": e.direction} for e in db_events]
+        cdates = [{"field_name": e.field_name, "date": e.target_date, "direction": e.direction} for e in db_events]
         date_vars = resolve_custom_dates(cdates)
         values = {k: v for k, v in values.items() if v}
         values = {**date_vars, **values}
@@ -613,9 +613,9 @@ async def custom_fields_page(request: Request, db: Session = Depends(get_db)):
         except (ValueError, TypeError):
             delta = 0
         event_list.append({
-            "id": e.id, "name": e.name, "target_date": e.target_date,
-            "direction": e.direction, "days": delta,
-            "var_key": f"{e.name}_倒數" if e.direction == "countdown" else f"{e.name}_天數",
+            "id": e.id, "name": e.name, "field_name": e.field_name,
+            "target_date": e.target_date, "direction": e.direction, "days": delta,
+            "var_key": e.field_name,
         })
     return templates.TemplateResponse(request, "custom_fields.html", {
         "request": request,
@@ -629,19 +629,39 @@ async def custom_field_save(
     request: Request,
     eid: Optional[int] = Form(None),
     name: str = Form(...),
+    field_name: str = Form(""),
     target_date: str = Form(...),
     direction: str = Form("countdown"),
     db: Session = Depends(get_db),
 ):
     from models import DateEvent
+
+    # 檢查重複
+    existing = db.query(DateEvent).filter(DateEvent.field_name == field_name)
+    if eid:
+        existing = existing.filter(DateEvent.id != eid)
+    if field_name and existing.first():
+        return templates.TemplateResponse(request, "custom_fields.html", {
+            "request": request,
+            "events": [],
+            "error": f"變量名 {field_name} 已存在",
+            "page": "custom_fields",
+        })
+
     if eid:
         item = db.query(DateEvent).filter(DateEvent.id == eid).first()
         if item:
             item.name = name
+            item.field_name = field_name or item.field_name
             item.target_date = target_date
             item.direction = direction
     else:
-        item = DateEvent(name=name, target_date=target_date, direction=direction)
+        # 自動生成 field_name
+        if not field_name:
+            prefix = "dateCountdown" if direction == "countdown" else "dateCountup"
+            n = db.query(DateEvent).filter(DateEvent.field_name.like(f"{prefix}%")).count() + 1
+            field_name = f"{prefix}{n}"
+        item = DateEvent(name=name, field_name=field_name, target_date=target_date, direction=direction)
         db.add(item)
     try:
         db.commit()
@@ -667,5 +687,6 @@ async def custom_fields_list(db: Session = Depends(get_db)):
     from models import DateEvent
     events = db.query(DateEvent).order_by(DateEvent.created_at).all()
     return JSONResponse([{
-        "id": e.id, "name": e.name, "target_date": e.target_date, "direction": e.direction
+        "id": e.id, "name": e.name, "field_name": e.field_name,
+        "target_date": e.target_date, "direction": e.direction
     } for e in events])
