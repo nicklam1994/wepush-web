@@ -197,6 +197,11 @@ def resolve_custom_dates(custom_dates: list) -> dict:
 
         try:
             target = datetime.strptime(date_str, "%Y-%m-%d").date()
+            # 倒計時：過去日期自動推到下一年（每年重複）
+            if direction == "countdown" and target < today:
+                target = target.replace(year=today.year)
+                if target < today:
+                    target = target.replace(year=today.year + 1)
             delta = (target - today).days
 
             if direction == "countdown":

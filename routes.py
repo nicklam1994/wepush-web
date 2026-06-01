@@ -604,6 +604,11 @@ async def custom_fields_page(request: Request, db: Session = Depends(get_db)):
     for e in events:
         try:
             target = date.fromisoformat(e.target_date)
+            # 倒計時：過去日期自動推到下一年（每年重複）
+            if e.direction == "countdown" and target < today:
+                target = target.replace(year=today.year)
+                if target < today:
+                    target = target.replace(year=today.year + 1)
             delta = (target - today).days
         except (ValueError, TypeError):
             delta = 0
