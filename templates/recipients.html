@@ -35,12 +35,12 @@
                                 data-bs-toggle="modal" data-bs-target="#recipientModal"
                                 data-id="{{ r.id }}" data-nickname="{{ r.nickname }}"
                                 data-openid="{{ r.openid }}" data-note="{{ r.note }}">
-                            <i class="bi bi-pencil"></i>
+                            <i class="bi bi-pencil"></i> 編輯
                         </button>
                         <form method="post" action="/recipients/{{ r.id }}/delete" style="display:inline"
                               onsubmit="return confirm('確定刪除嗎？')">
                             <button type="submit" class="btn btn-sm btn-outline-danger">
-                                <i class="bi bi-trash"></i>
+                                <i class="bi bi-trash"></i> 刪除
                             </button>
                         </form>
                     </td>
