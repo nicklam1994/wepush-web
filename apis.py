@@ -299,9 +299,24 @@ def _lookup_adcode(city_name: str) -> Optional[str]:
         return adcode_map[simplified + "市"]
 
     # 部分匹配：檢查 adcode_map 中是否有 key 包含城市名
+    # 優先：精確匹配 > 短 adcode（省/市級）> 長 adcode（區級）
+    candidates = []
     for key, adcode in adcode_map.items():
         if city_name in key or simplified in key:
-            return adcode
+            # 計算匹配分數：adcode 越短越好（省級100000=6位, 市級440100=6位, 區級440101=6位）
+            # 關鍵區分：後兩位為00的是市級
+            score = 0
+            if city_name == key or simplified == key:
+                score += 100
+            if adcode.endswith("0000"):  # 省級
+                score += 50
+            elif adcode.endswith("00"):  # 市級
+                score += 30
+            candidates.append((score, adcode))
+
+    if candidates:
+        candidates.sort(reverse=True)
+        return candidates[0][1]
 
     return None
 
