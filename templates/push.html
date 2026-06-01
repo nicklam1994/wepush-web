@@ -84,18 +84,13 @@
                         </div>
                     </div>
 
-                    <!-- 自定義日期 -->
-                    <div id="push-custom-dates" style="display:none;" class="border rounded p-3 mb-3">
-                        <label class="form-label">自定義日期事件</label>
-                        <div id="custom-dates-list"></div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="addCustomDate()">
-                            <i class="bi bi-plus"></i> 添加日期
-                        </button>
-                        <small class="text-secondary d-block mt-2">
-                            生成變量：<code>{{標籤_倒數}}</code> 或 <code>{{標籤_天數}}</code>
-                        </small>
+                    <!-- 自定義字段提示 -->
+                    <div id="push-custom-info" style="display:none;" class="border rounded p-3 mb-3">
+                        <small class="text-secondary">已定義的自定義字段（在 <a href=\"/custom-fields\" class=\"text-info\">自定義字段</a> 頁面管理）：</small>
+                        <div id="custom-fields-hint" class=\"mt-2\" style=\"font-size:12px;line-height:1.8;\">
+                            <span class=\"text-secondary\">載入中...</span>
+                        </div>
                     </div>
-                    <input type="hidden" name="custom_dates" id="hidden-custom-dates" value="[]">
 
                     <div class="mb-3">
                         <label class="form-label">模板字段值</label>
@@ -182,19 +177,9 @@ function submitPush(e) {
         values[input.getAttribute('data-name')] = input.value;
     });
 
-    // 收集自定義日期
-    var customDates = [];
-    document.querySelectorAll('.custom-date-row').forEach(function(row) {
-        var label = row.querySelector('.cd-label')?.value || '';
-        var date = row.querySelector('.cd-date')?.value || '';
-        var dir = row.querySelector('.cd-direction')?.value || 'countdown';
-        if (label && date) customDates.push({label: label, date: date, direction: dir});
-    });
-
     // 寫入 hidden
     var hidden = document.getElementById('hidden-var-values');
     hidden.value = JSON.stringify(values);
-    document.getElementById('hidden-custom-dates').value = JSON.stringify(customDates);
 
     // 提交表單
     e.target.closest('form').submit();
@@ -204,22 +189,24 @@ function togglePushDataSource() {
     var weather = document.getElementById('ds-weather');
     var custom = document.getElementById('ds-custom');
     document.getElementById('push-weather-info').style.display = weather.checked ? 'block' : 'none';
-    document.getElementById('push-custom-dates').style.display = custom.checked ? 'block' : 'none';
+    document.getElementById('push-custom-info').style.display = custom.checked ? 'block' : 'none';
+    if (custom.checked) loadCustomFieldsHint();
 }
 
-function addCustomDate() {
-    var list = document.getElementById('custom-dates-list');
-    var idx = list.children.length;
-    var html = '<div class="custom-date-row row g-2 mb-2 align-items-end">' +
-        '<div class="col-3"><input class="form-control form-control-sm cd-label" placeholder="標籤" value="生日"></div>' +
-        '<div class="col-4"><input class="form-control form-control-sm cd-date" type="date" value="2026-12-25"></div>' +
-        '<div class="col-3"><select class="form-select form-select-sm cd-direction">' +
-            '<option value="countdown">倒計時</option>' +
-            '<option value="countup">正計時</option>' +
-        '</select></div>' +
-        '<div class="col-2"><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest(\'.custom-date-row\').remove()">✕</button></div>' +
-        '</div>';
-    list.insertAdjacentHTML('beforeend', html);
+function loadCustomFieldsHint() {
+    fetch('/api/custom-fields/list')
+        .then(r => r.json())
+        .then(data => {
+            var hint = document.getElementById('custom-fields-hint');
+            if (data.length === 0) {
+                hint.innerHTML = '<span class="text-secondary">尚無自定義字段，<a href="/custom-fields" class="text-info">前往創建</a></span>';
+            } else {
+                hint.innerHTML = data.map(e => {
+                    var key = e.direction === 'countup' ? e.name + '_天數' : e.name + '_倒數';
+                    return '<code>' + '{{' + key + '}}' + '</code>';
+                }).join(' ');
+            }
+        });
 }
 </script>
 {% endblock %}

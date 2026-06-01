@@ -462,13 +462,11 @@ async def push_send(
     var_values: str = Form("{}"),
     ds_weather: str = Form(""),
     ds_custom: str = Form(""),
-    custom_dates: str = Form("[]"),
     db: Session = Depends(get_db),
 ):
     try:
         rids = json.loads(recipient_ids)
         values = json.loads(var_values)
-        cdates = json.loads(custom_dates)
     except json.JSONDecodeError as e:
         logger.warning(f"Invalid JSON in push form: {e}")
         return RedirectResponse(url="/push", status_code=303)
@@ -482,7 +480,10 @@ async def push_send(
 
     # 自定義日期
     if ds_custom == "1":
+        from models import DateEvent
         from apis import resolve_custom_dates
+        db_events = db.query(DateEvent).all()
+        cdates = [{"label": e.name, "date": e.target_date, "direction": e.direction} for e in db_events]
         date_vars = resolve_custom_dates(cdates)
         values = {k: v for k, v in values.items() if v}
         values = {**date_vars, **values}
@@ -639,3 +640,13 @@ async def custom_field_delete(eid: int, db: Session = Depends(get_db)):
         db.delete(item)
         db.commit()
     return RedirectResponse(url="/custom-fields", status_code=303)
+
+
+@router.get("/api/custom-fields/list")
+async def custom_fields_list(db: Session = Depends(get_db)):
+    """返回自定義字段列表 (JSON)"""
+    from models import DateEvent
+    events = db.query(DateEvent).order_by(DateEvent.created_at).all()
+    return JSONResponse([{
+        "id": e.id, "name": e.name, "target_date": e.target_date, "direction": e.direction
+    } for e in events])
