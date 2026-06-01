@@ -193,10 +193,18 @@
                                    onchange="toggleTaskDataSource()" style="border-color:#30363d;">
                             <label class="form-check-label" for="task-ds-amap">🌤 天氣數據 (高德，需Key)</label>
                         </div>
+                        <div id="task-amap-city" style="display:none;" class="ms-4 mt-2">
+                            <input type="text" name="amap_city" id="task-amap-city-input" class="form-control form-control-sm"
+                                   placeholder="城市名" value="香港" style="width:200px;">
+                        </div>
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="ds_openweather" value="1" id="task-ds-openweather"
                                    onchange="toggleTaskDataSource()" style="border-color:#30363d;">
                             <label class="form-check-label" for="task-ds-openweather">🌍 天氣數據 (OpenWeather，需Key)</label>
+                        </div>
+                        <div id="task-owm-city" style="display:none;" class="ms-4 mt-2">
+                            <input type="text" name="owm_city" id="task-owm-city-input" class="form-control form-control-sm"
+                                   placeholder="城市 (英文)" value="Hong Kong" style="width:200px;">
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="ds_custom" value="1" id="task-ds-custom"
@@ -315,6 +323,8 @@ document.addEventListener('DOMContentLoaded', function() {
         dcfg.ds_amap = dsAmap ? '1' : '';
         dcfg.ds_openweather = dsOWM ? '1' : '';
         dcfg.ds_custom = dsCustom ? '1' : '';
+        dcfg.amap_city = document.getElementById('task-amap-city-input').value || '香港';
+        dcfg.owm_city = document.getElementById('task-owm-city-input').value || 'Hong Kong';
 
         // 向後兼容的 data_source 字符串
         var dsStr = 'manual';
@@ -350,7 +360,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function toggleTaskDataSource() {
-    // placeholder for future data source configuration panels
+    document.getElementById('task-amap-city').style.display = document.getElementById('task-ds-amap').checked ? 'block' : 'none';
+    document.getElementById('task-owm-city').style.display = document.getElementById('task-ds-openweather').checked ? 'block' : 'none';
 }
 
 function addVarMapping(templateField, sourceField) {
