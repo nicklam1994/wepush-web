@@ -211,6 +211,18 @@ textarea.form-control {
     border-color: #2ea043;
 }
 
+.btn-outline-primary {
+    border-color: #1f6feb;
+    color: #58a6ff;
+    background: transparent;
+}
+
+.btn-outline-primary:hover {
+    background: #1f6feb22;
+    border-color: #58a6ff;
+    color: #79c0ff;
+}
+
 .btn-outline-secondary {
     border-color: #484f58;
     color: #c9d1d9;

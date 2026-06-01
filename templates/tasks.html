@@ -234,10 +234,10 @@
                                 <span style="color:#8b949e;line-height:32px;">=</span>
                                 <input type="text" name="var_keys" class="form-control" style="width:auto;flex:1;"
                                        placeholder="數據源變量名, 例如 now / today / temp / weather">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="this.parentElement.remove()">✕</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="this.parentElement.remove()">✕</button>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
+                        <button type="button" class="btn btn-sm btn-outline-primary mt-1"
                                 onclick="addVarMapping()">
                             <i class="bi bi-plus"></i> 添加映射
                         </button>
@@ -258,7 +258,7 @@
                     </div>
                 </div>
                 <div class="modal-footer" style="border-top-color:#30363d;">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">取消</button>
                     <button type="submit" class="btn btn-primary">保存任務</button>
                 </div>
             </form>
@@ -382,7 +382,7 @@ function addVarMapping(templateField, sourceField) {
     div.innerHTML = '<code class="cron-badge" style="padding:6px 10px;font-size:12px;">' + fieldName + '</code>' +
         '<span style="color:#8b949e;line-height:32px;">=</span>' +
         '<input type="text" name="var_keys" class="form-control" style="width:auto;flex:1;" value="' + (sourceField || '') + '" placeholder="變量名">' +
-        '<button type="button" class="btn btn-sm btn-outline-secondary" onclick="this.parentElement.remove()">✕</button>';
+        '<button type="button" class="btn btn-sm btn-outline-primary" onclick="this.parentElement.remove()">✕</button>';
     container.appendChild(div);
 }
 </script>
