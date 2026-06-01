@@ -88,17 +88,17 @@ def build_template_data(data_fields: list, values: dict) -> dict:
         # 1. 直接匹配：values 中有同名字段
         if name in values and values[name]:
             actual_value = values[name]
-        # 2. {{var}} 變量替換
-        elif "{{" in default_value:
+        else:
+            # 2. 無直接匹配時才用 default_value
             actual_value = default_value
-            for var_name in re.findall(r"\{\{(\w+)\}\}", default_value):
+
+        # 始終對值做 {{var}} 替換（無論來自 values 還是 default）
+        if "{{" in actual_value:
+            for var_name in re.findall(r"\{\{(\w+)\}\}", actual_value):
                 if var_name in values and values[var_name]:
                     actual_value = actual_value.replace(f"{{{{{var_name}}}}}", str(values[var_name]))
                 else:
                     actual_value = actual_value.replace(f"{{{{{var_name}}}}}", "")
-        # 3. 預設值
-        else:
-            actual_value = default_value
 
         result[name] = {"value": actual_value, "color": color}
     return result
