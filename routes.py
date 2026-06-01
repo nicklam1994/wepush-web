@@ -597,10 +597,24 @@ async def template_preview(tid: int, db: Session = Depends(get_db)):
 @router.get("/custom-fields")
 async def custom_fields_page(request: Request, db: Session = Depends(get_db)):
     from models import DateEvent
+    from datetime import date
     events = db.query(DateEvent).order_by(DateEvent.created_at).all()
+    today = date.today()
+    event_list = []
+    for e in events:
+        try:
+            target = date.fromisoformat(e.target_date)
+            delta = (target - today).days
+        except (ValueError, TypeError):
+            delta = 0
+        event_list.append({
+            "id": e.id, "name": e.name, "target_date": e.target_date,
+            "direction": e.direction, "days": delta,
+            "var_key": f"{e.name}_倒數" if e.direction == "countdown" else f"{e.name}_天數",
+        })
     return templates.TemplateResponse(request, "custom_fields.html", {
         "request": request,
-        "events": events,
+        "events": event_list,
         "page": "custom_fields",
     })
 

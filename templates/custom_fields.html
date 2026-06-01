@@ -37,16 +37,20 @@
                         {% endif %}
                     </td>
                     <td>
-                        {% set target = e.target_date | string %}
-                        {% set days = (target | string)[:10] %}
-                        <span class="text-secondary">自動計算</span>
+                        {% if e.days > 0 %}
+                            {% if e.direction == 'countup' %}
+                            <span class="text-success">+{{ e.days }} 天</span>
+                            {% else %}
+                            <span class="text-warning">還剩 {{ e.days }} 天</span>
+                            {% endif %}
+                        {% elif e.days == 0 %}
+                            <span class="text-info">🎉 今天！</span>
+                        {% else %}
+                            <span class="text-secondary">已過 {{ -e.days }} 天</span>
+                        {% endif %}
                     </td>
                     <td>
-                        {% if e.direction == 'countup' %}
-                        <code class="cron-badge">{{ '{{' + e.name + '_天數}}' }}</code>
-                        {% else %}
-                        <code class="cron-badge">{{ '{{' + e.name + '_倒數}}' }}</code>
-                        {% endif %}
+                        <code class="cron-badge">{{ '{{' + e.var_key + '}}' }}</code>
                     </td>
                     <td>
                         <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#dateModal"
