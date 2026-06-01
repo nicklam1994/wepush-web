@@ -460,23 +460,32 @@ async def push_send(
     template_id: int = Form(...),
     recipient_ids: str = Form("[]"),
     var_values: str = Form("{}"),
-    data_source: str = Form("manual"),
+    ds_weather: str = Form(""),
+    ds_custom: str = Form(""),
+    custom_dates: str = Form("[]"),
     db: Session = Depends(get_db),
 ):
     try:
         rids = json.loads(recipient_ids)
         values = json.loads(var_values)
+        cdates = json.loads(custom_dates)
     except json.JSONDecodeError as e:
         logger.warning(f"Invalid JSON in push form: {e}")
         return RedirectResponse(url="/push", status_code=303)
 
-    # 如果選擇了數據源，自動解析變量
-    if data_source != "manual":
+    # 天氣數據源
+    if ds_weather == "1":
         from apis import resolve_data_source
-        api_vars = await resolve_data_source(data_source, {})
-        # API 變量優先，手動輸入的非空值可覆蓋
-        values = {k: v for k, v in values.items() if v}  # 過濾空值
+        api_vars = await resolve_data_source("weather", {})
+        values = {k: v for k, v in values.items() if v}
         values = {**api_vars, **values}
+
+    # 自定義日期
+    if ds_custom == "1":
+        from apis import resolve_custom_dates
+        date_vars = resolve_custom_dates(cdates)
+        values = {k: v for k, v in values.items() if v}
+        values = {**date_vars, **values}
 
     result = await _manual_push_async(
         template_id=template_id,

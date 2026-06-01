@@ -2,8 +2,11 @@
 import time
 import threading
 import json
+import logging
 import httpx
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 # Thread-safe token cache
 _token_lock = threading.Lock()
@@ -65,6 +68,18 @@ async def send_template_message(
         resp = await client.post(api_url, json=body)
         result = resp.json()
 
+    # 40001 = token 過期，清緩存重試一次
+    if result.get("errcode") == 40001:
+        with _token_lock:
+            _token_cache["access_token"] = None
+            _token_cache["expires_at"] = 0
+        token = await get_access_token(appid, appsecret)
+        api_url = f"https://api.weixin.qq.com/cgi-bin/message/template/send?access_token={token}"
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(api_url, json=body)
+            result = resp.json()
+
+    logger.info(f"WeChat send result: errcode={result.get('errcode')}, errmsg={result.get('errmsg')}, msgid={result.get('msgid')}")
     return result
 
 

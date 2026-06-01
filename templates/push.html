@@ -61,23 +61,41 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">數據源</label>
-                        <select name="data_source" id="push-data-source" class="form-select"
-                                onchange="togglePushDataSource()">
-                            <option value="manual">📄 手動填寫</option>
-                            <option value="weather">🌤 天氣數據 (HKO 免費)</option>
-                        </select>
-                    </div>
-                    <div id="push-data-config" style="display:none;" class="border rounded p-3 mb-3">
-                        <small class="text-secondary">✅ HKO 自動天氣數據，可用變量：</small>
-                        <div class="mt-2" style="font-size:12px;line-height:1.8;">
-                            <code>temp</code> <code>humidity</code> <code>latest_temp</code> <code>temp_max</code> <code>temp_min</code>
-                            <code>weather</code> <code>situation</code> <code>update_time</code>
-                            <code>sunrise</code> <code>sunset</code> <code>uv_index</code> <code>uv_intensity</code>
-                            <code>lunar_date</code> <code>solar_term</code> <code>date_display</code>
-                            <code>tc_info</code> <code>now</code> <code>today</code> <code>time</code> <code>weekday</code>
+                        <label class="form-label">數據源 <small class="text-secondary">（可多選）</small></label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="ds_weather" value="1" id="ds-weather"
+                                   onchange="togglePushDataSource()" style="border-color:#30363d;">
+                            <label class="form-check-label" for="ds-weather">🌤 天氣數據 (HKO 免費)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="ds_custom" value="1" id="ds-custom"
+                                   onchange="togglePushDataSource()" style="border-color:#30363d;">
+                            <label class="form-check-label" for="ds-custom">📅 自定義日期 (倒計時/正計時)</label>
                         </div>
                     </div>
+
+                    <!-- 天氣變量提示 -->
+                    <div id="push-weather-info" style="display:none;" class="border rounded p-3 mb-3">
+                        <small class="text-secondary">可用天氣變量：</small>
+                        <div class="mt-2" style="font-size:12px;line-height:1.8;">
+                            <code>temp</code> <code>humidity</code> <code>weather_short</code> <code>uv_index</code>
+                            <code>temp_max</code> <code>temp_min</code> <code>sunrise</code> <code>sunset</code>
+                            <code>date_display</code> <code>lunar_date</code> <code>now</code> <code>today</code>
+                        </div>
+                    </div>
+
+                    <!-- 自定義日期 -->
+                    <div id="push-custom-dates" style="display:none;" class="border rounded p-3 mb-3">
+                        <label class="form-label">自定義日期事件</label>
+                        <div id="custom-dates-list"></div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="addCustomDate()">
+                            <i class="bi bi-plus"></i> 添加日期
+                        </button>
+                        <small class="text-secondary d-block mt-2">
+                            生成變量：<code>{{標籤_倒數}}</code> 或 <code>{{標籤_天數}}</code>
+                        </small>
+                    </div>
+                    <input type="hidden" name="custom_dates" id="hidden-custom-dates" value="[]">
 
                     <div class="mb-3">
                         <label class="form-label">模板字段值</label>
@@ -164,18 +182,44 @@ function submitPush(e) {
         values[input.getAttribute('data-name')] = input.value;
     });
 
+    // 收集自定義日期
+    var customDates = [];
+    document.querySelectorAll('.custom-date-row').forEach(function(row) {
+        var label = row.querySelector('.cd-label')?.value || '';
+        var date = row.querySelector('.cd-date')?.value || '';
+        var dir = row.querySelector('.cd-direction')?.value || 'countdown';
+        if (label && date) customDates.push({label: label, date: date, direction: dir});
+    });
+
     // 寫入 hidden
     var hidden = document.getElementById('hidden-var-values');
     hidden.value = JSON.stringify(values);
+    document.getElementById('hidden-custom-dates').value = JSON.stringify(customDates);
 
     // 提交表單
     e.target.closest('form').submit();
 }
 
 function togglePushDataSource() {
-    var val = document.getElementById('push-data-source').value;
-    var config = document.getElementById('push-data-config');
-    config.style.display = (val === 'manual') ? 'none' : 'block';
+    var weather = document.getElementById('ds-weather');
+    var custom = document.getElementById('ds-custom');
+    document.getElementById('push-weather-info').style.display = weather.checked ? 'block' : 'none';
+    document.getElementById('push-custom-dates').style.display = custom.checked ? 'block' : 'none';
+}
+
+function addCustomDate() {
+    var list = document.getElementById('custom-dates-list');
+    var idx = list.children.length;
+    var html = '<div class="custom-date-row row g-2 mb-2 align-items-end">' +
+        '<div class="col-3"><input class="form-control form-control-sm cd-label" placeholder="標籤" value="生日"></div>' +
+        '<div class="col-4"><input class="form-control form-control-sm cd-date" type="date" value="2026-12-25"></div>' +
+        '<div class="col-3"><select class="form-select form-select-sm cd-direction">' +
+            '<option value="countdown">倒計時</option>' +
+            '<option value="countup">正計時</option>' +
+        '</select></div>' +
+        '<div class="col-2"><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest(\'.custom-date-row\').remove()">✕</button></div>' +
+        '</div>';
+    list.insertAdjacentHTML('beforeend', html);
 }
 </script>
 {% endblock %}

@@ -180,3 +180,32 @@ async def resolve_data_source(data_source: str, data_config: dict) -> dict:
     variables["weekday"] = ["一", "二", "三", "四", "五", "六", "日"][now.weekday()]
 
     return variables
+
+
+def resolve_custom_dates(custom_dates: list) -> dict:
+    """解析自定義日期，生成倒計時/正計時變量"""
+    variables = {}
+    today = datetime.now().date()
+
+    for cd in custom_dates:
+        label = cd.get("label", "").strip()
+        date_str = cd.get("date", "").strip()
+        direction = cd.get("direction", "countdown")
+
+        if not label or not date_str:
+            continue
+
+        try:
+            target = datetime.strptime(date_str, "%Y-%m-%d").date()
+            delta = (target - today).days
+
+            if direction == "countdown":
+                key = f"{label}_倒數"
+                variables[key] = f"{delta}天" if delta >= 0 else f"已過{-delta}天"
+            else:
+                key = f"{label}_天數"
+                variables[key] = f"{delta}天"
+        except (ValueError, TypeError):
+            pass
+
+    return variables

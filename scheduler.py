@@ -172,6 +172,7 @@ async def _manual_push_async(
         return {"error": "沒有選擇接收人"}
 
     data = build_template_data(template.data_fields or [], variables)
+    logger.info(f"Push data for template '{template.name}': {data}")
     miniprogram = None
     if template.ma_appid and template.ma_page_path:
         miniprogram = {"appid": template.ma_appid, "pagepath": template.ma_page_path}
