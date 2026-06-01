@@ -51,6 +51,23 @@
     </div>
 </div>
 
+<!-- 推送內容 -->
+{% if h.push_data %}
+<div class="card mt-3">
+    <div class="card-header">推送內容</div>
+    <div class="card-body">
+        <table class="table" style="font-size:13px;">
+            {% for key, val in h.push_data.items() %}
+            <tr>
+                <td class="text-secondary" style="width:100px;">{{ key }}</td>
+                <td>{{ val.value }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+{% endif %}
+
 <!-- 推送詳情 -->
 <div class="card mt-3">
     <div class="card-header">發送詳情</div>

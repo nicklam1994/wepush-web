@@ -109,7 +109,7 @@ def build_template_data(data_fields: list, values: dict) -> dict:
 
         # 始終對值做 {{var}} 替換（無論來自 values 還是 default）
         if "{{" in actual_value:
-            for var_name in re.findall(r"\{\{(\w+)\}\}", actual_value):
+            for var_name in re.findall(r"\{\{([^{}]+)\}\}", actual_value):
                 if var_name in values and values[var_name]:
                     actual_value = actual_value.replace(f"{{{{{var_name}}}}}", str(values[var_name]))
                 else:

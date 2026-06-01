@@ -220,6 +220,7 @@ async def _manual_push_async(
         success_count=success_count,
         fail_count=fail_count,
         details=details,
+        push_data=data,
         status=status,
     )
     db_session.add(history)

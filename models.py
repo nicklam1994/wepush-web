@@ -146,6 +146,8 @@ class PushHistory(Base):
     fail_count = Column(Integer, default=0, comment="失败数")
     # JSON array of {openid, status, error}
     details = Column(JSON, default=list, comment="推送详情")
+    # JSON of the actual WeChat template data sent
+    push_data = Column(JSON, default=dict, comment="推送內容")
     status = Column(String(20), default="pending", comment="pending/success/partial/fail")
     created_at = Column(DateTime, default=datetime.now)
 
