@@ -6,7 +6,7 @@ from typing import Optional
 from datetime import datetime
 
 # 引入 weather-hko-api 項目
-_HKO_PATH = os.path.expanduser("~/repos/weather-hko-api")
+_HKO_PATH = "/home/nicklam-ai/repos/weather-hko-api"
 if _HKO_PATH not in sys.path:
     sys.path.insert(0, _HKO_PATH)
 
